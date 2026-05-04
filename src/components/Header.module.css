@@ -1,0 +1,99 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(245, 240, 232, 0.95);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--borda);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 72px;
+}
+
+.logo {
+  text-decoration: none;
+}
+
+.logoMarca {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--verde-escuro);
+  letter-spacing: -0.02em;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.navLink {
+  font-size: .9375rem;
+  color: var(--texto-secundario);
+  font-weight: 500;
+  transition: color var(--transicao);
+  text-decoration: none;
+}
+
+.navLink:hover {
+  color: var(--verde-escuro);
+}
+
+.navCta {
+  background: var(--verde-escuro);
+  color: var(--branco) !important;
+  padding: .625rem 1.25rem;
+  border-radius: 40px;
+  font-size: .9375rem;
+  font-weight: 600;
+  transition: background var(--transicao);
+  text-decoration: none;
+}
+
+.navCta:hover {
+  background: var(--verde-medio);
+  color: var(--branco);
+}
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  padding: .5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.hamburgerLinha {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--verde-escuro);
+  border-radius: 2px;
+  transition: transform var(--transicao), opacity var(--transicao);
+}
+
+@media (max-width: 768px) {
+  .hamburger { display: flex; }
+
+  .nav {
+    display: none;
+    position: absolute;
+    top: 72px;
+    left: 0;
+    right: 0;
+    background: var(--areia);
+    flex-direction: column;
+    padding: 1.5rem;
+    gap: 1.25rem;
+    border-bottom: 1px solid var(--borda);
+    box-shadow: var(--sombra-suave);
+  }
+
+  .navAberto { display: flex; }
+}

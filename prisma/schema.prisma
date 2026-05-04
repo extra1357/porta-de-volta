@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+enum TipoPerfil {
+  PACIENTE
+  FAMILIAR
+}
+
+enum StatusLead {
+  NOVO
+  EM_ATENDIMENTO
+  ENCAMINHADO
+  FINALIZADO
+  ARQUIVADO
+}
+
+model Lead {
+  id              String     @id @default(cuid())
+  criadoEm       DateTime   @default(now())
+  atualizadoEm   DateTime   @updatedAt
+
+  perfil          TipoPerfil
+  primeiroNome    String
+  contatoWhatsapp String
+  contatoEmail    String?
+
+  comoEstaHoje    String     @db.Text
+  tempoSituacao   String
+  jaTeveAjuda     Boolean
+  relatoLivre     String     @db.Text
+
+  status          StatusLead @default(NOVO)
+  notaInterna     String?    @db.Text
+
+  ip              String?
+  userAgent       String?    @db.Text
+
+  lgpdConsentimento Boolean  @default(false)
+  lgpdDataConsent   DateTime?
+
+  auditLog        AuditLog[]
+
+  @@index([status])
+  @@index([criadoEm])
+  @@index([perfil])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  criadoEm DateTime @default(now())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id])
+  acao      String
+  detalhes  String?  @db.Text
+
+  @@index([leadId])
+}
+
+model AdminSession {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  criadoEm DateTime @default(now())
+  expiraEm  DateTime
+
+  @@index([token])
+  @@index([expiraEm])
+}

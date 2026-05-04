@@ -1,0 +1,40 @@
+.heroBgWrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.heroBgSlide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center center;
+  animation: kenburns 7s ease-out forwards;
+}
+
+.heroBgAtiva {
+  opacity: 1;
+  z-index: 1;
+}
+
+.heroBgOculta {
+  opacity: 0;
+  z-index: 2;
+  transition: opacity 0s;
+}
+
+.heroBgVisivel {
+  opacity: 1;
+  z-index: 2;
+  transition: opacity 0.9s ease-in;
+}
+
+@keyframes kenburns {
+  from {
+    transform: scale(1.12);
+  }
+  to {
+    transform: scale(1.0);
+  }
+}

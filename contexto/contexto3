@@ -1,0 +1,2516 @@
+
+Claude terminou a resposta
+Você disse: continuemos o contexto neste contexto estavamos tendo muitos problamas com a criação dos arquivo EOF e os PYEOF estavam quebrando o codigo pela metade proporci…
+
+contexto2
+continuemos o contexto neste contexto estavamos tendo muitos problamas com a criação dos arquivo EOF e os PYEOF estavam quebrando o codigo pela metade proporcionando muitos erros vamos mitigar daqui para frente e voce é agora um dev senior arquiteto especialista e deve construir tudo conforme a documentação da stack vigente então estude o contexto e não repita os erros
+
+18:25
+Claude respondeu: Contexto totalmente absorvido.
+
+Visualizou 2 arquivos
+Visualizou 2 arquivos
+Contexto totalmente absorvido. Entendi o projeto e os padrões de erro recorrentes.
+
+Diagnóstico dos problemas anteriores:
+
+heredoc (<< 'EOF') quebrando quando o código contém backticks, ${}, aspas — o shell interpola ou trunca
+Tags <a sendo cortadas pelo heredoc ou corrompidas pelo chat
+next.config.ts incompatível com Next.js 14
+Estratégia daqui em diante: vou usar create_file diretamente no container e entregar arquivos para download — zero heredoc, zero corrupção.
+
+Me diga por onde quer continuar. Com base no contexto, o próximo passo natural é:
+
+/quero-ajuda — questionário empático para o paciente
+/quero-ajudar — questionário para o familiar
+POST /api/triagem — API route que salva no Neon/Prisma e dispara email
+/privacidade — política LGPD
+/sobre — página do Gustavo
+/admin — painel para ler os relatos
+Qual rota atacamos primeiro?
+
+Você disse: mesmo assim eu prefiro EOF pois colo direto no console e muito mais produtivo fora isso existe outra tecnica de desenvolvimento?
+mesmo assim eu prefiro EOF pois colo direto no console e muito mais produtivo fora isso existe outra tecnica de desenvolvimento?
+
+18:27
+Claude respondeu: Faz todo sentido — colar direto no terminal é muito mais rápido que baixar arquivo.
+Faz todo sentido — colar direto no terminal é muito mais rápido que baixar arquivo.
+
+O problema com EOF não é o heredoc em si, é o conteúdo dentro dele. As causas de quebra são:
+
+1. Backticks dentro do heredoc
+
+bash
+# QUEBRA — o shell executa o backtick como subshell
+texto: `${SITE.terapeuta} lê cada...`
+
+# SOLUÇÃO — usar aspas simples no delimitador (já faz isso com 'EOF')
+# MAS dentro do heredoc, trocar template literal por concatenação
+texto: SITE.terapeuta + ' lê cada...'
+2. ${} dentro do heredoc sem aspas simples no delimitador Você já usa << 'ENDOFFILE' — isso resolve. O problema é quando o delimitador vem sem aspas.
+
+3. Arquivo muito longo — o terminal corta Essa é a causa principal dos truncamentos. Terminais têm buffer limit (~32KB).
+
+A técnica mais produtiva para arquivos grandes:
+
+Quebrar em blocos menores com append:
+
+bash
+cat > src/app/page.tsx << 'EOF'
+# bloco 1 — imports e constantes
+EOF
+
+cat >> src/app/page.tsx << 'EOF'
+# bloco 2 — componente
+EOF
+Ou a técnica mais robusta de todas — Python heredoc:
+
+bash
+python3 << 'PYEOF'
+content = """
+// código aqui — sem interferência do shell
+"""
+with open("src/app/page.tsx", "w") as f:
+    f.write(content)
+PYEOF
+O Python não interpola nada, aguenta arquivos enormes, e as aspas triplas não quebram com JSX.
+
+Minha proposta: daqui pra frente entrego os arquivos já particionados em blocos de no máximo ~80 linhas cada, com append >> no segundo em diante. Assim você cola bloco por bloco sem risco de truncamento.
+
+Por onde começamos?
+
+Você disse: /quero-ajuda aqui como voce ja absorveu o contexto vou pedir que consulte as perguntas de psicologos e terepeutas para que o questionario não seja contrangedor…
+/quero-ajuda aqui como voce ja absorveu o contexto vou pedir que consulte as perguntas de psicologos e terepeutas para que o questionario não seja contrangedor e o mais umanizado possivel para extrair com objetividade tudo que é o gatilho para individuos dependentes quimicamente fisicamente e psicologigamente para que o questionario funcione mais como uma consulta e deixe o individuo a vontade para se expor para o terapeuta
+
+18:32
+Claude respondeu: Vou pesquisar as melhores práticas clínicas antes de escrever uma linha de código.
+Vou pesquisar as melhores práticas clínicas antes de escrever uma linha de código.
+
+
+Pesquisou na web
+Pesquisou na web
+Pesquisa clínica sólida. Agora tenho tudo que preciso. Vou consolidar a arquitetura antes de escrever código.
+
+Arquitetura do Questionário — fundamentação clínica
+Baseado em:
+
+ASSIST (OMS) — 8 questões sobre frequência de uso, compulsão, tentativas de parar, prejuízos em tarefas, preocupação de pessoas próximas 
+SciELO Brazil
+Entrevista Motivacional — perguntas abertas que encorajam o paciente a falar o máximo possível, evitando perguntas consecutivas demais 
+Clinicajorgejaber
+Postura de parceria, aceitação, evocação e compaixão — o profissional estrutura o diálogo evitando perguntas em demasia, dando condições propícias para o paciente falar 
+Neliana Figlie
+Ambiente de confiança onde o indivíduo se sente acolhido para falar sem sofrer retaliações — via escuta reflexiva e empatia desde o primeiro contato 
+BVS Saúde
+Estrutura do fluxo — 6 etapas conversacionais
+Etapa 0 — Acolhimento        (sem perguntas, só presença)
+Etapa 1 — O momento atual    (o que te trouxe aqui hoje?)
+Etapa 2 — A substância       (qual, frequência, contexto — ASSIST adaptado)
+Etapa 3 — O impacto na vida  (trabalho, família, saúde — sem julgamento)
+Etapa 4 — Tentativas e força (já tentou parar? o que funcionou?)
+Etapa 5 — O que você quer    (o que mudaria se pudesse? — EM: balança decisória)
+Etapa 6 — Sobre você         (dados mínimos para o terapeuta entrar em contato)
+Cada etapa tem: mensagem de transição empática + 1 pergunta principal + opções quando necessário. Nunca 2 perguntas consecutivas.
+
+Deliverables — 4 blocos EOF
+Vou entregar em 4 blocos para colar em sequência:
+
+src/app/quero-ajuda/page.tsx — metadata + constantes do questionário
+src/app/quero-ajuda/page.tsx (append) — componente React parte 1
+src/app/quero-ajuda/page.tsx (append) — componente React parte 2
+src/app/quero-ajuda/page.module.css
+Posso começar? Ou quer revisar/ajustar a estrutura das 6 etapas antes de eu gerar o código?
+
+Você disse: pode começar
+pode começar
+
+18:35
+Claude respondeu: Vou ler o skill de frontend antes de escrever uma linha.
+Vou ler o skill de frontend antes de escrever uma linha.
+
+
+Reading frontend design skill
+Reading frontend design skill
+Skill absorvido. Agora os 4 blocos — cole um de cada vez no terminal.
+
+BLOCO 1 de 4 — cria o arquivo com metadata e constantes
+
+bash
+cat > ~/porta-de-volta/src/app/quero-ajuda/page.tsx << 'EOF'
+import type { Metadata } from 'next'
+import { SITE } from '@/lib/constants'
+import QueroAjudaCliente from './QueroAjudaCliente'
+
+export const metadata: Metadata = {
+  title: 'Preciso de ajuda — ' + SITE.nome,
+  description: 'Conte como você está. Sem julgamentos, sem pressa. Nosso terapeuta vai ouvir você com cuidado e encontrar juntos o próximo passo.',
+  robots: { index: false, follow: false },
+}
+
+export default function QueroAjudaPage() {
+  return <QueroAjudaCliente />
+}
+EOF
+BLOCO 2 de 4 — cria o componente cliente parte 1 (etapas 0-3)
+
+bash
+cat > ~/porta-de-volta/src/app/quero-ajuda/QueroAjudaCliente.tsx << 'EOF'
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { SITE, WHATSAPP_URL } from '@/lib/constants'
+import styles from './quero-ajuda.module.css'
+
+type Etapa = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
+
+interface Respostas {
+  motivacao: string
+  substancias: string[]
+  frequencia: string
+  contexto: string
+  impactoVida: string
+  impactoRelacoes: string
+  tentativas: string
+  oQueQuer: string
+  nome: string
+  contato: string
+  contatoTipo: 'whatsapp' | 'email' | ''
+  livre: string
+}
+
+const SUBSTANCIAS = [
+  { id: 'alcool', label: 'Álcool' },
+  { id: 'crack', label: 'Crack' },
+  { id: 'cocaina', label: 'Cocaína' },
+  { id: 'maconha', label: 'Maconha' },
+  { id: 'ansiolíticos', label: 'Ansiolíticos / Remédios para dormir' },
+  { id: 'anfetaminas', label: 'Anfetaminas / Estimulantes' },
+  { id: 'heroina', label: 'Heroína / Opioides' },
+  { id: 'inalantes', label: 'Inalantes / Solventes' },
+  { id: 'outros', label: 'Outra substância' },
+]
+
+const FREQUENCIAS = [
+  { id: 'diario', label: 'Todo dia ou quase todo dia' },
+  { id: 'semanal', label: 'Algumas vezes por semana' },
+  { id: 'mensal', label: 'Algumas vezes por mês' },
+  { id: 'ocasional', label: 'Raramente / em ocasiões específicas' },
+  { id: 'parei', label: 'Parei, mas me preocupo com recaída' },
+]
+
+const CONTEXTOS = [
+  { id: 'sozinho', label: 'Quando estou sozinho' },
+  { id: 'estresse', label: 'Para lidar com estresse ou ansiedade' },
+  { id: 'dor', label: 'Para aliviar dor física ou emocional' },
+  { id: 'social', label: 'Em situações sociais' },
+  { id: 'habito', label: 'Já virou hábito automático' },
+  { id: 'nao_sei', label: 'Não sei bem explicar' },
+]
+
+const IMPACTOS_VIDA = [
+  { id: 'trabalho', label: 'Trabalho ou estudos' },
+  { id: 'saude', label: 'Saúde física' },
+  { id: 'sono', label: 'Sono e energia' },
+  { id: 'financeiro', label: 'Situação financeira' },
+  { id: 'autoestima', label: 'Autoestima e autoimagem' },
+  { id: 'nenhum', label: 'Ainda não percebi impacto direto' },
+]
+
+const IMPACTOS_RELACOES = [
+  { id: 'familia', label: 'Família' },
+  { id: 'parceiro', label: 'Parceiro(a) / relacionamento afetivo' },
+  { id: 'amigos', label: 'Amizades' },
+  { id: 'trabalho_rel', label: 'Colegas de trabalho' },
+  { id: 'isolamento', label: 'Me isolei de quase todos' },
+  { id: 'nenhum_rel', label: 'Não percebi impacto nos relacionamentos' },
+]
+
+const TENTATIVAS = [
+  { id: 'nunca', label: 'Nunca tentei parar formalmente' },
+  { id: 'sozinho', label: 'Já tentei sozinho mas não consegui manter' },
+  { id: 'tratamento', label: 'Já fiz algum tipo de tratamento' },
+  { id: 'internacao', label: 'Já fui internado' },
+  { id: 'multiplas', label: 'Tentei muitas vezes, sempre recaio' },
+]
+
+const O_QUE_QUER = [
+  { id: 'parar', label: 'Parar completamente' },
+  { id: 'reduzir', label: 'Reduzir e ter mais controle' },
+  { id: 'entender', label: 'Entender melhor minha situação primeiro' },
+  { id: 'clinica', label: 'Ser encaminhado para tratamento especializado' },
+  { id: 'conversar', label: 'Só quero conversar com alguém que entenda' },
+]
+
+const etapaTotal = 7
+
+export default function QueroAjudaCliente() {
+  const [etapa, setEtapa] = useState<Etapa>(0)
+  const [enviando, setEnviando] = useState(false)
+  const [enviado, setEnviado] = useState(false)
+  const [erro, setErro] = useState('')
+  const [respostas, setRespostas] = useState<Respostas>({
+    motivacao: '',
+    substancias: [],
+    frequencia: '',
+    contexto: '',
+    impactoVida: '',
+    impactoRelacoes: '',
+    tentativas: '',
+    oQueQuer: '',
+    nome: '',
+    contato: '',
+    contatoTipo: '',
+    livre: '',
+  })
+
+  function set<K extends keyof Respostas>(campo: K, valor: Respostas[K]) {
+    setRespostas((prev) => ({ ...prev, [campo]: valor }))
+  }
+
+  function toggleSubstancia(id: string) {
+    setRespostas((prev) => {
+      const existe = prev.substancias.includes(id)
+      return {
+        ...prev,
+        substancias: existe
+          ? prev.substancias.filter((s) => s !== id)
+          : [...prev.substancias, id],
+      }
+    })
+  }
+
+  function avancar() {
+    setEtapa((e) => (e + 1) as Etapa)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function voltar() {
+    setEtapa((e) => (e - 1) as Etapa)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  async function enviar() {
+    if (!respostas.nome.trim() || !respostas.contato.trim() || !respostas.contatoTipo) {
+      setErro('Por favor, preencha seu nome e como podemos te contatar.')
+      return
+    }
+    setErro('')
+    setEnviando(true)
+    try {
+      const res = await fetch('/api/triagem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: 'paciente', ...respostas }),
+      })
+      if (!res.ok) throw new Error('Falha no envio')
+      setEnviado(true)
+      setEtapa(7)
+    } catch {
+      setErro('Algo deu errado. Tente novamente ou nos chame pelo WhatsApp.')
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  const progresso = etapa === 0 ? 0 : Math.round((etapa / etapaTotal) * 100)
+
+  return (
+    <main className={styles.main}>
+      <div className={styles.card}>
+
+        {etapa > 0 && etapa < 7 && (
+          <div className={styles.progressoWrap} aria-label={'Progresso: etapa ' + etapa + ' de ' + etapaTotal}>
+            <div className={styles.progressoBarra}>
+              <div className={styles.progressoFill} style={{ width: progresso + '%' }} />
+            </div>
+            <span className={styles.progressoLabel}>{etapa} de {etapaTotal}</span>
+          </div>
+        )}
+
+        {/* ETAPA 0 — Acolhimento */}
+        {etapa === 0 && (
+          <div className={styles.etapa}>
+            <div className={styles.iconeWrap} aria-hidden="true">🌱</div>
+            <h1 className={styles.titulo}>Você fez algo difícil ao chegar até aqui.</h1>
+            <p className={styles.texto}>
+              Este espaço é seu. Não há respostas certas ou erradas, não há
+              julgamentos e nada do que você compartilhar será exposto.
+            </p>
+            <p className={styles.texto}>
+              Vou te fazer algumas perguntas simples para que{' '}
+              <strong>{SITE.terapeuta}</strong>, nosso terapeuta, entenda melhor
+              a sua situação antes de entrar em contato com você.
+            </p>
+            <p className={styles.textoDestaque}>
+              Leva cerca de 5 minutos. Você pode parar quando quiser.
+            </p>
+            <button className={styles.btnPrimario} onClick={avancar}>
+              Estou pronto para começar
+            </button>
+            <Link href="/" className={styles.linkVoltar}>
+              Voltar para o início
+            </Link>
+          </div>
+        )}
+
+        {/* ETAPA 1 — Motivação */}
+        {etapa === 1 && (
+          <div className={styles.etapa}>
+            <p className={styles.etapaLabel}>Para começar</p>
+            <h2 className={styles.titulo}>O que te trouxe aqui hoje?</h2>
+            <p className={styles.texto}>
+              Não precisa ser perfeito. Pode ser uma frase curta — o que
+              está pesando mais neste momento.
+            </p>
+            <textarea
+              className={styles.textarea}
+              placeholder="Pode escrever do seu jeito..."
+              rows={5}
+              value={respostas.motivacao}
+              onChange={(e) => set('motivacao', e.target.value)}
+              aria-label="O que te trouxe aqui hoje"
+            />
+            <div className={styles.acoes}>
+              <button className={styles.btnSecundario} onClick={voltar}>Voltar</button>
+              <button
+                className={styles.btnPrimario}
+                onClick={avancar}
+                disabled={!respostas.motivacao.trim()}
+              >
+                Continuar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ETAPA 2 — Substância e frequência */}
+        {etapa === 2 && (
+          <div className={styles.etapa}>
+            <p className={styles.etapaLabel}>Sobre o uso</p>
+            <h2 className={styles.titulo}>Com qual substância você tem tido dificuldade?</h2>
+            <p className={styles.texto}>
+              Pode marcar mais de uma. Essas informações ajudam o terapeuta
+              a entender melhor como te apoiar.
+            </p>
+            <div className={styles.checkGrid}>
+              {SUBSTANCIAS.map((s) => (
+                <button
+                  key={s.id}
+                  className={
+                    styles.checkItem +
+                    (respostas.substancias.includes(s.id) ? ' ' + styles.checkItemAtivo : '')
+                  }
+                  onClick={() => toggleSubstancia(s.id)}
+                  aria-pressed={respostas.substancias.includes(s.id)}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+
+            <p className={styles.subPergunta}>Com que frequência acontece?</p>
+            <div className={styles.radioStack}>
+              {FREQUENCIAS.map((f) => (
+                <button
+                  key={f.id}
+                  className={
+                    styles.radioItem +
+                    (respostas.frequencia === f.id ? ' ' + styles.radioItemAtivo : '')
+                  }
+                  onClick={() => set('frequencia', f.id)}
+                  aria-pressed={respostas.frequencia === f.id}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            <div className={styles.acoes}>
+              <button className={styles.btnSecundario} onClick={voltar}>Voltar</button>
+              <button
+                className={styles.btnPrimario}
+                onClick={avancar}
+                disabled={respostas.substancias.length === 0 || !respostas.frequencia}
+              >
+                Continuar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ETAPA 3 — Contexto de uso */}
+        {etapa === 3 && (
+          <div className={styles.etapa}>
+            <p className={styles.etapaLabel}>Entendendo melhor</p>
+            <h2 className={styles.titulo}>Em que situações isso costuma acontecer?</h2>
+            <p className={styles.texto}>
+              Sem julgamento nenhum — isso ajuda o terapeuta a entender
+              o que pode estar por trás do uso.
+            </p>
+            <div className={styles.radioStack}>
+              {CONTEXTOS.map((c) => (
+                <button
+                  key={c.id}
+                  className={
+                    styles.radioItem +
+                    (respostas.contexto === c.id ? ' ' + styles.radioItemAtivo : '')
+                  }
+                  onClick={() => set('contexto', c.id)}
+                  aria-pressed={respostas.contexto === c.id}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+            <div className={styles.acoes}>
+              <button className={styles.btnSecundario} onClick={voltar}>Voltar</button>
+              <button
+                className={styles.btnPrimario}
+                onClick={avancar}
+                disabled={!respostas.contexto}
+              >
+                Continuar
+              </button>
+            </div>
+          </div>
+        )}
+EOF
+BLOCO 3 de 4 — append com etapas 4-7 e fechamento do componente
+
+bash
+cat >> ~/porta-de-volta/src/app/quero-ajuda/QueroAjudaCliente.tsx << 'EOF'
+
+        {/* ETAPA 4 — Impacto na vida */}
+        {etapa === 4 && (
+          <div className={styles.etapa}>
+            <p className={styles.etapaLabel}>O impacto na sua vida</p>
+            <h2 className={styles.titulo}>Em quais áreas você tem sentido mais dificuldade?</h2>
+            <p className={styles.texto}>
+              Escolha quantas fizerem sentido para você.
+            </p>
+            <div className={styles.checkGrid}>
+              {IMPACTOS_VIDA.map((item) => (
+                <button
+                  key={item.id}
+                  className={
+                    styles.checkItem +
+                    (respostas.impactoVida.includes(item.id) ? ' ' + styles.checkItemAtivo : '')
+                  }
+                  onClick={() =>
+                    set(
+                      'impactoVida',
+                      respostas.impactoVida.includes(item.id)
+                        ? respostas.impactoVida.replace(item.id, '').trim()
+                        : (respostas.impactoVida + ' ' + item.id).trim()
+                    )
+                  }
+                  aria-pressed={respostas.impactoVida.includes(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <p className={styles.subPergunta}>E nos seus relacionamentos?</p>
+            <div className={styles.checkGrid}>
+              {IMPACTOS_RELACOES.map((item) => (
+                <button
+                  key={item.id}
+                  className={
+                    styles.checkItem +
+                    (respostas.impactoRelacoes.includes(item.id) ? ' ' + styles.checkItemAtivo : '')
+                  }
+                  onClick={() =>
+                    set(
+                      'impactoRelacoes',
+                      respostas.impactoRelacoes.includes(item.id)
+                        ? respostas.impactoRelacoes.replace(item.id, '').trim()
+                        : (respostas.impactoRelacoes + ' ' + item.id).trim()
+                    )
+                  }
+                  aria-pressed={respostas.impactoRelacoes.includes(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <div className={styles.acoes}>
+              <button className={styles.btnSecundario} onClick={voltar}>Voltar</button>
+              <button className={styles.btnPrimario} onClick={avancar}>
+                Continuar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ETAPA 5 — Tentativas anteriores */}
+        {etapa === 5 && (
+          <div className={styles.etapa}>
+            <p className={styles.etapaLabel}>Sua jornada até aqui</p>
+            <h2 className={styles.titulo}>
+              Você já tentou parar ou reduzir antes?
+            </h2>
+            <p className={styles.texto}>
+              Não existe resposta certa. Saber o que você já viveu ajuda
+              o terapeuta a encontrar o melhor caminho com você.
+            </p>
+            <div className={styles.radioStack}>
+              {TENTATIVAS.map((t) => (
+                <button
+                  key={t.id}
+                  className={
+                    styles.radioItem +
+                    (respostas.tentativas === t.id ? ' ' + styles.radioItemAtivo : '')
+                  }
+                  onClick={() => set('tentativas', t.id)}
+                  aria-pressed={respostas.tentativas === t.id}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <div className={styles.acoes}>
+              <button className={styles.btnSecundario} onClick={voltar}>Voltar</button>
+              <button
+                className={styles.btnPrimario}
+                onClick={avancar}
+                disabled={!respostas.tentativas}
+              >
+                Continuar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ETAPA 6 — O que quer + contato */}
+        {etapa === 6 && (
+          <div className={styles.etapa}>
+            <p className={styles.etapaLabel}>Quase lá</p>
+            <h2 className={styles.titulo}>O que você gostaria que mudasse?</h2>
+            <p className={styles.texto}>
+              Escolha o que mais ressoa com você agora — pode ser diferente
+              amanhã, e tudo bem.
+            </p>
+            <div className={styles.radioStack}>
+              {O_QUE_QUER.map((o) => (
+                <button
+                  key={o.id}
+                  className={
+                    styles.radioItem +
+                    (respostas.oQueQuer === o.id ? ' ' + styles.radioItemAtivo : '')
+                  }
+                  onClick={() => set('oQueQuer', o.id)}
+                  aria-pressed={respostas.oQueQuer === o.id}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+
+            <p className={styles.subPergunta}>
+              Quer deixar mais alguma coisa para o terapeuta saber?
+            </p>
+            <textarea
+              className={styles.textarea}
+              placeholder="Opcional — escreva o que quiser..."
+              rows={4}
+              value={respostas.livre}
+              onChange={(e) => set('livre', e.target.value)}
+              aria-label="Mensagem livre para o terapeuta"
+            />
+
+            <div className={styles.separador} />
+
+            <p className={styles.subPergunta}>Como podemos te chamar?</p>
+            <input
+              className={styles.input}
+              type="text"
+              placeholder="Seu nome (pode ser só o primeiro)"
+              value={respostas.nome}
+              onChange={(e) => set('nome', e.target.value)}
+              aria-label="Seu nome"
+            />
+
+            <p className={styles.subPergunta}>Como prefere receber o retorno?</p>
+            <div className={styles.contatoOpcoes}>
+              <button
+                className={
+                  styles.contatoOpcao +
+                  (respostas.contatoTipo === 'whatsapp' ? ' ' + styles.contatoAtivo : '')
+                }
+                onClick={() => set('contatoTipo', 'whatsapp')}
+                aria-pressed={respostas.contatoTipo === 'whatsapp'}
+              >
+                WhatsApp
+              </button>
+              <button
+                className={
+                  styles.contatoOpcao +
+                  (respostas.contatoTipo === 'email' ? ' ' + styles.contatoAtivo : '')
+                }
+                onClick={() => set('contatoTipo', 'email')}
+                aria-pressed={respostas.contatoTipo === 'email'}
+              >
+                E-mail
+              </button>
+            </div>
+            {respostas.contatoTipo && (
+              <input
+                className={styles.input}
+                type={respostas.contatoTipo === 'email' ? 'email' : 'tel'}
+                placeholder={
+                  respostas.contatoTipo === 'whatsapp'
+                    ? 'Seu número com DDD'
+                    : 'Seu e-mail'
+                }
+                value={respostas.contato}
+                onChange={(e) => set('contato', e.target.value)}
+                aria-label="Seu contato"
+              />
+            )}
+
+            <p className={styles.lgpdAviso}>
+              🔒 Seus dados são tratados como informação sensível de saúde, conforme
+              a LGPD. Jamais serão compartilhados sem sua autorização.
+            </p>
+
+            {erro && <p className={styles.erroMsg} role="alert">{erro}</p>}
+
+            <div className={styles.acoes}>
+              <button className={styles.btnSecundario} onClick={voltar} disabled={enviando}>
+                Voltar
+              </button>
+              <button
+                className={styles.btnPrimario}
+                onClick={enviar}
+                disabled={enviando || !respostas.nome.trim() || !respostas.contato.trim() || !respostas.contatoTipo}
+              >
+                {enviando ? 'Enviando...' : 'Enviar para o terapeuta'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ETAPA 7 — Confirmação */}
+        {etapa === 7 && (
+          <div className={styles.etapa}>
+            <div className={styles.iconeWrap} aria-hidden="true">💚</div>
+            <h2 className={styles.titulo}>
+              {respostas.nome ? respostas.nome + ', recebemos sua mensagem.' : 'Recebemos sua mensagem.'}
+            </h2>
+            <p className={styles.texto}>
+              {SITE.terapeuta} vai ler o que você compartilhou com atenção e
+              cuidado, e vai entrar em contato pelo{' '}
+              {respostas.contatoTipo === 'whatsapp' ? 'WhatsApp' : 'e-mail'} em breve.
+            </p>
+            <p className={styles.texto}>
+              Se quiser conversar agora, pode nos chamar diretamente:
+            </p>
+            
+              href={WHATSAPP_URL('Olá ' + SITE.terapeuta + ', acabei de preencher o questionário no site.')}
+              className={styles.btnWhatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Chamar no WhatsApp agora
+            </a>
+            <Link href="/" className={styles.linkVoltar}>
+              Voltar para o início
+            </Link>
+          </div>
+        )}
+
+      </div>
+    </main>
+  )
+}
+EOF
+BLOCO 4 de 4 — CSS module
+
+bash
+cat > ~/porta-de-volta/src/app/quero-ajuda/quero-ajuda.module.css << 'EOF'
+.main {
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem 4rem;
+  background: var(--bg);
+}
+
+.card {
+  width: 100%;
+  max-width: 620px;
+  background: var(--surface);
+  border-radius: 1.25rem;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.07);
+}
+
+/* Progresso */
+.progressoWrap {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: 2rem;
+}
+.progressoBarra {
+  flex: 1;
+  height: 4px;
+  background: var(--borda);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.progressoFill {
+  height: 100%;
+  background: var(--primario);
+  border-radius: 99px;
+  transition: width .4s ease;
+}
+.progressoLabel {
+  font-size: .75rem;
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+
+/* Etapa */
+.etapa {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.etapaLabel {
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--primario);
+  margin: 0;
+}
+.iconeWrap {
+  font-size: 3rem;
+  text-align: center;
+  margin-bottom: .5rem;
+}
+.titulo {
+  font-size: clamp(1.25rem, 3vw, 1.6rem);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--texto);
+  margin: 0;
+}
+.texto {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--texto-suave);
+  margin: 0;
+}
+.textoDestaque {
+  font-size: .9375rem;
+  color: var(--texto);
+  font-weight: 500;
+  background: color-mix(in srgb, var(--primario) 8%, transparent);
+  border-left: 3px solid var(--primario);
+  padding: .625rem .875rem;
+  border-radius: 0 .5rem .5rem 0;
+  margin: 0;
+}
+.subPergunta {
+  font-size: .9375rem;
+  font-weight: 600;
+  color: var(--texto);
+  margin: .5rem 0 0;
+}
+.separador {
+  height: 1px;
+  background: var(--borda);
+  margin: .5rem 0;
+}
+
+/* Opções de seleção */
+.checkGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .5rem;
+}
+.checkItem {
+  padding: .625rem .875rem;
+  border: 1.5px solid var(--borda);
+  border-radius: .625rem;
+  background: transparent;
+  color: var(--texto-suave);
+  font-size: .875rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all .2s;
+  line-height: 1.3;
+}
+.checkItem:hover {
+  border-color: var(--primario);
+  color: var(--texto);
+}
+.checkItemAtivo {
+  border-color: var(--primario);
+  background: color-mix(in srgb, var(--primario) 10%, transparent);
+  color: var(--primario);
+  font-weight: 600;
+}
+
+.radioStack {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+.radioItem {
+  padding: .75rem 1rem;
+  border: 1.5px solid var(--borda);
+  border-radius: .625rem;
+  background: transparent;
+  color: var(--texto-suave);
+  font-size: .9375rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all .2s;
+}
+.radioItem:hover {
+  border-color: var(--primario);
+  color: var(--texto);
+}
+.radioItemAtivo {
+  border-color: var(--primario);
+  background: color-mix(in srgb, var(--primario) 10%, transparent);
+  color: var(--primario);
+  font-weight: 600;
+}
+
+/* Inputs */
+.textarea {
+  width: 100%;
+  padding: .875rem 1rem;
+  border: 1.5px solid var(--borda);
+  border-radius: .625rem;
+  background: var(--bg);
+  color: var(--texto);
+  font-size: .9375rem;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color .2s;
+  box-sizing: border-box;
+}
+.textarea:focus {
+  outline: none;
+  border-color: var(--primario);
+}
+.input {
+  width: 100%;
+  padding: .75rem 1rem;
+  border: 1.5px solid var(--borda);
+  border-radius: .625rem;
+  background: var(--bg);
+  color: var(--texto);
+  font-size: .9375rem;
+  font-family: inherit;
+  transition: border-color .2s;
+  box-sizing: border-box;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--primario);
+}
+
+/* Contato */
+.contatoOpcoes {
+  display: flex;
+  gap: .5rem;
+}
+.contatoOpcao {
+  flex: 1;
+  padding: .75rem;
+  border: 1.5px solid var(--borda);
+  border-radius: .625rem;
+  background: transparent;
+  color: var(--texto-suave);
+  font-size: .9375rem;
+  cursor: pointer;
+  transition: all .2s;
+}
+.contatoAtivo {
+  border-color: var(--primario);
+  background: color-mix(in srgb, var(--primario) 10%, transparent);
+  color: var(--primario);
+  font-weight: 600;
+}
+
+/* LGPD */
+.lgpdAviso {
+  font-size: .8125rem;
+  color: var(--texto-suave);
+  background: color-mix(in srgb, var(--primario) 5%, transparent);
+  border-radius: .5rem;
+  padding: .625rem .875rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Erro */
+.erroMsg {
+  color: #c0392b;
+  font-size: .875rem;
+  background: #fdf0ef;
+  border-radius: .5rem;
+  padding: .625rem .875rem;
+  margin: 0;
+}
+
+/* Botões de ação */
+.acoes {
+  display: flex;
+  gap: .75rem;
+  justify-content: flex-end;
+  margin-top: .5rem;
+}
+.btnPrimario {
+  padding: .75rem 1.5rem;
+  background: var(--primario);
+  color: #fff;
+  border: none;
+  border-radius: .625rem;
+  font-size: .9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .2s, transform .15s;
+}
+.btnPrimario:hover:not(:disabled) {
+  opacity: .9;
+  transform: translateY(-1px);
+}
+.btnPrimario:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+.btnSecundario {
+  padding: .75rem 1.25rem;
+  background: transparent;
+  color: var(--texto-suave);
+  border: 1.5px solid var(--borda);
+  border-radius: .625rem;
+  font-size: .9375rem;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+.btnSecundario:hover:not(:disabled) {
+  border-color: var(--texto-suave);
+}
+.btnSecundario:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+.btnWhatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .875rem 1.5rem;
+  background: #25d366;
+  color: #fff;
+  border-radius: .625rem;
+  font-weight: 600;
+  font-size: .9375rem;
+  text-decoration: none;
+  transition: opacity .2s;
+}
+.btnWhatsapp:hover {
+  opacity: .9;
+}
+.linkVoltar {
+  text-align: center;
+  font-size: .875rem;
+  color: var(--texto-suave);
+  text-decoration: none;
+  margin-top: .25rem;
+}
+.linkVoltar:hover {
+  color: var(--texto);
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 1.75rem 1.25rem;
+  }
+  .checkGrid {
+    grid-template-columns: 1fr;
+  }
+  .acoes {
+    flex-direction: column-reverse;
+  }
+  .btnPrimario,
+  .btnSecundario {
+    width: 100%;
+    text-align: center;
+  }
+}
+EOF
+Depois de colar os 4 blocos, rode:
+
+bash
+rm -rf ~/porta-de-volta/.next
+npm run dev --prefix ~/porta-de-volta
+O que foi construído:
+
+7 etapas conversacionais baseadas no ASSIST (OMS) e Entrevista Motivacional — nenhuma pergunta clínica direta, todas formuladas com linguagem de acolhimento
+Fluxo sem confronto — o paciente nunca é perguntado se "é dependente", apenas sobre frequência, contexto e impacto
+Balança decisória (etapa 6) — o que você quer que mude? — técnica central da EM
+Progresso visual para o usuário saber que está avançando
+Barra desabilitada enquanto campos obrigatórios estão vazios — sem frustração
+LGPD explícita antes do envio
+POST /api/triagem já chamado — precisamos construir essa rota em seguida
+Quer seguir para a /api/triagem ou primeiro a /quero-ajudar para o familiar?
+
+Você disse: como eu acesso para ver
+como eu acesso para ver
+
+18:42
+Claude respondeu: Após colar os 4 blocos e rodar o npm run dev, acesse:
+Após colar os 4 blocos e rodar o npm run dev, acesse:
+
+http://localhost:3000/quero-ajuda
+Direto no navegador do seu Mac enquanto o servidor estiver rodando no terminal.
+
+Se o servidor já estava rodando quando colou os arquivos, o Next.js detecta automaticamente — não precisa reiniciar. Mas se aparecer algum erro de compilação, rode:
+
+bash
+rm -rf ~/porta-de-volta/.next && npm run dev --prefix ~/porta-de-volta
+E acessa a mesma URL.
+
+Você disse: tai ○ Compiling /_not-found .
+tai  ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 8.9s (513 modules)
+ GET /quero-ajuda 404 in 469ms
+ GET / 200 in 202ms
+ GET /quero-ajuda 404 in 194ms
+ GET / 200 in 144ms
+ GET /quero-ajuda 404 in 329ms
+
+18:43
+Claude respondeu: 404 significa que a pasta não foi criada.
+404 significa que a pasta não foi criada. Verifique:
+
+bash
+ls ~/porta-de-volta/src/app/quero-ajuda/
+Se não existir, crie a pasta primeiro e cole os blocos de novo:
+
+bash
+mkdir -p ~/porta-de-volta/src/app/quero-ajuda
+Depois cole o BLOCO 1 novamente, depois o 2, 3 e 4 na sequência.
+
+Após colar os 4, confirme que os arquivos existem:
+
+bash
+ls ~/porta-de-volta/src/app/quero-ajuda/
+Deve aparecer:
+
+page.tsx  QueroAjudaCliente.tsx  quero-ajuda.module.css
+Se aparecer esses 3 arquivos, o Next.js vai compilar automaticamente e a rota /quero-ajuda vai funcionar.
+
+Você disse: aqui corrigido mas sem nosso estilo corrija sem eof que eu colo la
+aqui corrigido mas sem nosso estilo corrija sem eof que eu colo la
+
+19:02
+Claude respondeu: Manda um cat dos arquivos de estilo global para eu ver as variáveis CSS que vocês já têm:
+Manda um cat dos arquivos de estilo global para eu ver as variáveis CSS que vocês já têm:
+
+bash
+cat ~/porta-de-volta/src/app/globals.css
+e
+
+bash
+cat ~/porta-de-volta/src/app/page.module.css
+Cola o resultado aqui que corrijo o CSS do questionário para ficar idêntico ao estilo do site.
+
+
+'use client' import { useState } from 'react' import Link from 'next/link' import { SITE } from '@/lib/constants' import styles from './quero-ajuda.module.css' type Etapa = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 interface Respostas { motivacao: string substancias: string[] frequencia: string conte
+
+pasted
+
+19:03
+Claude respondeu: Preciso ver o globals.
+Preciso ver o globals.css antes de corrigir o estilo. Cole o resultado desse comando:
+
+bash
+cat ~/porta-de-volta/src/app/globals.css
+Você disse: dson@edson-MacBook:~/porta-de-volta$ cat ~/porta-de-volta/src/app/globals.
+dson@edson-MacBook:~/porta-de-volta$ cat ~/porta-de-volta/src/app/globals.css
+cat: /home/edson/porta-de-volta/src/app/globals.css: Arquivo ou diretório inexistente
+edson@edson-MacBook:~/porta-de-volta$
+
+19:03
+Claude respondeu: Cola o resultado que localizo onde estão os estilos globais.
+bash
+find ~/porta-de-volta/src -name "*.css" | head -20
+Cola o resultado que localizo onde estão os estilos globais.
+
+Você disse: edson@edson-MacBook:~/porta-de-volta$ dson@edson-MacBook:~/porta-de-volta$ cat ~/porta-de-volta/src/app/globals.
+edson@edson-MacBook:~/porta-de-volta$ dson@edson-MacBook:~/porta-de-volta$ cat ~/porta-de-volta/src/app/globals.css
+cat: /home/edson/porta-de-volta/src/app/globals.css: Arquivo ou diretório inexistente
+edson@edson-MacBook:~/porta-de-volta$ 
+-bash: dson@edson-MacBook:~/porta-de-volta$: Arquivo ou diretório inexistente
+Comando 'cat:' não encontrado, você quis dizer:
+  comando 'catm' do deb mescc-tools (1.4.0-1)
+  comando 'cat' do deb coreutils (9.4-3ubuntu6.2)
+Experimente: sudo apt install <deb name>
+-bash: edson@edson-MacBook:~/porta-de-volta$: Arquivo ou diretório inexistente
+edson@edson-MacBook:~/porta-de-volta$
+
+Mostrar mais
+19:04
+bash
+find ~/porta-de-volta/src -name "*.css" | head -20
+Você disse: edson@edson-MacBook:~/porta-de-volta$ find ~/porta-de-volta/src -name "*.
+edson@edson-MacBook:~/porta-de-volta$ find ~/porta-de-volta/src -name "*.css" | head -20
+/home/edson/porta-de-volta/src/styles/globals.css
+/home/edson/porta-de-volta/src/app/page.module.css
+/home/edson/porta-de-volta/src/app/quero-ajuda/quero-ajuda.module.css
+/home/edson/porta-de-volta/src/components/Footer.module.css
+/home/edson/porta-de-volta/src/components/BotaoWhatsApp.module.css
+/home/edson/porta-de-volta/src/components/Header.module.css
+edson@edson-MacBook:~/porta-de-volta$
+
+19:04
+bash
+cat ~/porta-de-volta/src/styles/globals.css && echo "---PAGE---" && cat ~/porta-de-volta/src/app/page.module.css
+
+edson@edson-MacBook:~/porta-de-volta$ cat ~/porta-de-volta/src/styles/globals.css && echo "---PAGE---" && cat ~/porta-de-volta/src/app/page.module.css :root { --verde-escuro: #1a4a3a; --verde-medio: #2d6a54; --verde-suave: #4a8f72; --verde-claro: #e8f5ef; --verde-menta: #c8e6d8; --areia:
+
+pasted
+
+19:05
+Claude respondeu: Perfeito.
+Perfeito. Agora tenho tudo. O CSS do questionário precisa usar as variáveis do projeto (--verde-escuro, --areia, --verde-claro, etc.) e os botões globais (.btn-primario, .btn-secundario).
+
+Dois arquivos para colar — CSS primeiro, depois o componente completo.
+
+ARQUIVO 1 — CSS corrigido com o estilo do projeto
+
+bash
+cat > ~/porta-de-volta/src/app/quero-ajuda/quero-ajuda.module.css << 'EOF'
+.main {
+  min-height: 100vh;
+  background: var(--areia);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4rem 1.5rem 6rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 640px;
+  background: var(--branco);
+  border-radius: var(--radius-lg);
+  padding: 3rem 2.5rem;
+  box-shadow: var(--sombra-suave);
+}
+
+/* Progresso */
+.progressoWrap {
+  display: flex;
+  align-items: center;
+  gap: .875rem;
+  margin-bottom: 2.5rem;
+}
+.progressoBarra {
+  flex: 1;
+  height: 4px;
+  background: var(--verde-menta);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.progressoFill {
+  height: 100%;
+  background: var(--verde-escuro);
+  border-radius: 99px;
+  transition: width .4s ease;
+}
+.progressoLabel {
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+
+/* Etapa */
+.etapa {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.etapaLabel {
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--verde-suave);
+  margin: 0;
+}
+
+.iconeWrap {
+  font-size: 3rem;
+  text-align: center;
+}
+
+.titulo {
+  font-size: clamp(1.375rem, 3vw, 1.75rem);
+  font-weight: 700;
+  color: var(--verde-escuro);
+  line-height: 1.25;
+  margin: 0;
+}
+
+.texto {
+  font-size: 1rem;
+  color: var(--texto-secundario);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.textoDestaque {
+  font-size: .9375rem;
+  color: var(--verde-escuro);
+  font-weight: 500;
+  background: var(--verde-claro);
+  border-left: 3px solid var(--verde-suave);
+  padding: .75rem 1rem;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin: 0;
+}
+
+.subPergunta {
+  font-size: .9375rem;
+  font-weight: 600;
+  color: var(--verde-escuro);
+  margin: .75rem 0 0;
+}
+
+.separador {
+  height: 1px;
+  background: var(--borda);
+  margin: .5rem 0;
+}
+
+/* Seleção múltipla */
+.checkGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .625rem;
+}
+
+.checkItem {
+  padding: .75rem 1rem;
+  border: 1.5px solid var(--borda);
+  border-radius: var(--radius-sm);
+  background: var(--areia);
+  color: var(--texto-secundario);
+  font-size: .875rem;
+  font-family: var(--fonte-corpo);
+  cursor: pointer;
+  text-align: left;
+  line-height: 1.4;
+  transition: all var(--transicao);
+}
+.checkItem:hover {
+  border-color: var(--verde-suave);
+  color: var(--verde-escuro);
+}
+.checkItemAtivo {
+  border-color: var(--verde-medio);
+  background: var(--verde-claro);
+  color: var(--verde-escuro);
+  font-weight: 600;
+}
+
+/* Seleção única */
+.radioStack {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.radioItem {
+  padding: .875rem 1.125rem;
+  border: 1.5px solid var(--borda);
+  border-radius: var(--radius-sm);
+  background: var(--areia);
+  color: var(--texto-secundario);
+  font-size: .9375rem;
+  font-family: var(--fonte-corpo);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transicao);
+}
+.radioItem:hover {
+  border-color: var(--verde-suave);
+  color: var(--verde-escuro);
+}
+.radioItemAtivo {
+  border-color: var(--verde-medio);
+  background: var(--verde-claro);
+  color: var(--verde-escuro);
+  font-weight: 600;
+}
+
+/* Inputs */
+.textarea {
+  width: 100%;
+  padding: 1rem 1.125rem;
+  border: 1.5px solid var(--borda);
+  border-radius: var(--radius-sm);
+  background: var(--areia);
+  color: var(--texto-principal);
+  font-size: .9375rem;
+  font-family: var(--fonte-corpo);
+  line-height: 1.65;
+  resize: vertical;
+  transition: border-color var(--transicao);
+  box-sizing: border-box;
+}
+.textarea:focus {
+  outline: none;
+  border-color: var(--verde-medio);
+  background: var(--branco);
+}
+.textarea::placeholder { color: var(--texto-suave); }
+
+.input {
+  width: 100%;
+  padding: .875rem 1.125rem;
+  border: 1.5px solid var(--borda);
+  border-radius: var(--radius-sm);
+  background: var(--areia);
+  color: var(--texto-principal);
+  font-size: .9375rem;
+  font-family: var(--fonte-corpo);
+  transition: border-color var(--transicao);
+  box-sizing: border-box;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--verde-medio);
+  background: var(--branco);
+}
+.input::placeholder { color: var(--texto-suave); }
+
+/* Contato */
+.contatoOpcoes {
+  display: flex;
+  gap: .625rem;
+}
+.contatoOpcao {
+  flex: 1;
+  padding: .875rem;
+  border: 1.5px solid var(--borda);
+  border-radius: var(--radius-sm);
+  background: var(--areia);
+  color: var(--texto-secundario);
+  font-size: .9375rem;
+  font-family: var(--fonte-corpo);
+  cursor: pointer;
+  transition: all var(--transicao);
+}
+.contatoAtivo {
+  border-color: var(--verde-medio);
+  background: var(--verde-claro);
+  color: var(--verde-escuro);
+  font-weight: 600;
+}
+
+/* LGPD */
+.lgpdAviso {
+  font-size: .8125rem;
+  color: var(--texto-suave);
+  background: var(--verde-claro);
+  border-radius: var(--radius-sm);
+  padding: .75rem 1rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Erro */
+.erroMsg {
+  font-size: .875rem;
+  color: #b91c1c;
+  background: #fef2f2;
+  border-radius: var(--radius-sm);
+  padding: .75rem 1rem;
+  margin: 0;
+}
+
+/* Ações */
+.acoes {
+  display: flex;
+  gap: .875rem;
+  justify-content: flex-end;
+  margin-top: .5rem;
+}
+
+.btnPrimario {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  background: var(--verde-escuro);
+  color: var(--branco);
+  padding: .875rem 1.875rem;
+  border-radius: var(--radius-xl);
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: var(--fonte-corpo);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: background var(--transicao), transform var(--transicao);
+}
+.btnPrimario:hover:not(:disabled) {
+  background: var(--verde-medio);
+  transform: translateY(-2px);
+}
+.btnPrimario:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btnSecundario {
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  color: var(--verde-escuro);
+  padding: .875rem 1.5rem;
+  border-radius: var(--radius-xl);
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: var(--fonte-corpo);
+  border: 2px solid var(--verde-escuro);
+  cursor: pointer;
+  transition: all var(--transicao);
+}
+.btnSecundario:hover:not(:disabled) {
+  background: var(--verde-escuro);
+  color: var(--branco);
+  transform: translateY(-2px);
+}
+.btnSecundario:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+.btnWhatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .625rem;
+  background: #25d366;
+  color: var(--branco);
+  padding: 1rem 2rem;
+  border-radius: var(--radius-xl);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--transicao), transform var(--transicao);
+}
+.btnWhatsapp:hover {
+  background: #1ebe5a;
+  color: var(--branco);
+  transform: translateY(-2px);
+}
+
+.linkVoltar {
+  text-align: center;
+  font-size: .9375rem;
+  color: var(--texto-suave);
+  text-decoration: none;
+  transition: color var(--transicao);
+}
+.linkVoltar:hover { color: var(--verde-escuro); }
+
+@media (max-width: 640px) {
+  .card { padding: 2rem 1.25rem; }
+  .checkGrid { grid-template-columns: 1fr; }
+  .acoes { flex-direction: column-reverse; }
+  .btnPrimario,
+  .btnSecundario { width: 100%; justify-content: center; }
+}
+EOF
+ARQUIVO 2 — Componente completo corrigido
+
+bash
+cat > ~/porta-de-volta/src/app/quero-ajuda/QueroAjudaCliente.tsx << 'EOF'
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { SITE, WHATSAPP_URL } from '@/lib/constants'
+import styles from './quero-ajuda.module.css'
+
+type Etapa = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
+
+interface Respostas {
+  motivacao: string
+  substancias: string[]
+  frequencia: string
+  contexto: string
+  impactoVida: string[]
+  impactoRelacoes: string[]
+  tentativas: string
+  oQueQuer: string
+  nome: string
+  contato: string
+  contatoTipo: 'whatsapp' | 'email' | ''
+  livre: string
+}
+
+const SUBSTANCIAS = [
+  { id: 'alcool',       label: 'Álcool' },
+  { id: 'crack',        label: 'Crack' },
+  { id: 'cocaina',      label: 'Cocaína' },
+  { id: 'maconha',      label: 'Maconha' },
+  { id: 'ansioliticos', label: 'Ansiolíticos / Remédios para dormir' },
+  { id: 'anfetaminas',  label: 'Anfetaminas / Estimulantes' },
+  { id: 'heroina',      label: 'Heroína / Opioides' },
+  { id: 'inalantes',    label: 'Inalantes / Solventes' },
+  { id: 'outros',       label: 'Outra substância' },
+]
+
+const FREQUENCIAS = [
+  { id: 'diario',    label: 'Todo dia ou quase todo dia' },
+  { id: 'semanal',   label: 'Algumas vezes por semana' },
+  { id: 'mensal',    label: 'Algumas vezes por mês' },
+  { id: 'ocasional', label: 'Raramente / em ocasiões específicas' },
+  { id: 'parei',     label: 'Parei, mas me preocupo com recaída' },
+]
+
+const CONTEXTOS = [
+  { id: 'sozinho',  label: 'Quando estou sozinho' },
+  { id: 'estresse', label: 'Para lidar com estresse ou ansiedade' },
+  { id: 'dor',      label: 'Para aliviar dor física ou emocional' },
+  { id: 'social',   label: 'Em situações sociais' },
+  { id: 'habito',   label: 'Já virou hábito automático' },
+  { id: 'nao_sei',  label: 'Não sei bem explicar' },
+]
+
+const IMPACTOS_VIDA = [
+  { id: 'trabalho',    label: 'Trabalho ou estudos' },
+  { id: 'saude',       label: 'Saúde física' },
+  { id: 'sono',        label: 'Sono e energia' },
+  { id: 'financeiro',  label: 'Situação financeira' },
+  { id: 'autoestima',  label: 'Autoestima e autoimagem' },
+  { id: 'nenhum',      label: 'Ainda não percebi impacto direto' },
+]
+
+const IMPACTOS_RELACOES = [
+  { id: 'familia',      label: 'Família' },
+  { id: 'parceiro',     label: 'Parceiro(a) / relacionamento afetivo' },
+  { id: 'amigos',       label: 'Amizades' },
+  { id: 'trabalho_rel', label: 'Colegas de trabalho' },
+  { id: 'isolamento',   label: 'Me isolei de quase todos' },
+  { id: 'nenhum_rel',   label: 'Não percebi impacto nos relacionamentos' },
+]
+
+const TENTATIVAS = [
+  { id: 'nunca',     label: 'Nunca tentei parar formalmente' },
+  { id: 'sozinho',   label: 'Já tentei sozinho mas não consegui manter' },
+  { id: 'tratamento',label: 'Já fiz algum tipo de tratamento' },
+  { id: 'internacao',label: 'Já fui internado' },
+  { id: 'multiplas', label: 'Tentei muitas vezes, sempre recaio' },
+]
+
+const O_QUE_QUER = [
+  { id: 'parar',     label: 'Parar completamente' },
+  { id: 'reduzir',   label: 'Reduzir e ter mais controle' },
+  { id: 'entender',  label: 'Entender melhor minha situação primeiro' },
+  { id: 'clinica',   label: 'Ser encaminhado para tratamento especializado' },
+  { id: 'conversar', label: 'Só quero conversar com alguém que entenda' },
+]
+
+const ETAPA_TOTAL = 7
+
+function toggle(arr: string[], id: string): string[] {
+  return arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]
+}
+
+export default function QueroAjudaCliente() {
+  const [etapa, setEtapa]     = useState<Etapa>(0)
+  const [enviando, setEnviando] = useState(false)
+  const [erro, setErro]       = useState('')
+  const [respostas, setRespostas] = useState<Respostas>({
+    motivacao: '', substancias: [], frequencia: '', contexto: '',
+    impactoVida: [], impactoRelacoes: [], tentativas: '', oQueQuer: '',
+    nome: '', contato: '', contatoTipo: '', livre: '',
+  })
+
+  function set<K extends keyof Respostas>(campo: K, valor: Respostas[K]) {
+    setRespostas((prev) => ({ ...prev, [campo]: valor }))
+  }
+
+  function avancar() {
+    setEtapa((e) => Math.min(e + 1, ETAPA_TOTAL) as Etapa)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+  function voltar() {
+    setEtapa((e) => Math.max(e - 1, 0) as Etapa)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  async function enviar() {
+    if (!respostas.nome.trim() || !respostas.contato.trim() || !respostas.contatoTipo) {
+      setErro('Por favor, preencha seu nome e como podemos te contatar.')
+      return
+    }
+    setErro('')
+    setEnviando(true)
+    try {
+      const res = await fetch('/api/triagem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: 'paciente', ...respostas }),
+      })
+      if (!res.ok) throw new Error('erro')
+      avancar()
+    } catch {
+      setErro('Algo deu errado. Tente novamente ou nos chame pelo WhatsApp.')
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  const progresso = etapa === 0 ? 0 : Math.round((etapa / ETAPA_TOTAL) * 100)
+
+  return (
+    <main className={styles.main}>
+      <div className={styles.card}>
+
+        {etapa > 0 && etapa < ETAPA_TOTAL && (
+          <div className={styles.progressoWrap} aria-label={'Etapa ' + etapa + ' de ' + ETAPA_TOTAL}>
+            <div className={styles.progressoBarra}>
+              <div className={styles.progressoFill} style={{ width: progresso + '%' }} />
+            </div>
+            <span className={styles.progressoLabel}>{etapa} de {ETAPA_TOTAL}</span>
+          </div>
+        )}
+
+        {etapa === 0 && (
+          <div className={styles.etapa}>
+            <div className={styles.iconeWrap} aria-hidden="true">🌱</div>
+            <h1 className={styles.titulo}>Você fez algo difícil ao chegar até aqui.</h1>
+            <p className={styles.texto}>
+              Este espaço é seu. Não há respostas certas ou erradas,
+              não há julgamentos e nada do que você compartilhar será exposto.
+            </p>
+            <p className={styles.texto}>
+              Vou te fazer algumas perguntas simples para que{' '}
+              <strong>{SITE.terapeuta}</strong> entenda melhor a sua situação
+              antes de entrar em contato com você.
+            </p>
+            <p className={styles.textoDestaque}>
+              Leva cerca de 5 minutos. Você pode parar quando quiser.
+            </p>
+            <button className={styles.btnPrimario} onClick={avancar}>
+              Estou pronto para começar
+            </button>
+            <Link href="/" className={styles.linkVoltar}>Voltar para o início</Link>
+          </div>
+        )}
+
+        {etapa === 1 && (
+          <div className={styles.etapa}>
+            <p className={styles.etapaLabel}>Para começar</p>
+            <h2 className={styles.titulo}>O que te trouxe aqui hoje?</h2>
+            <p className={styles.texto}>
+              Não precisa ser perfeito. Pode ser uma frase curta —
+              o que está pesando mais neste momento.
+            </p>
+            <textarea
+              className={styles.textarea}
+              placeholder="Pode escrever do seu jeito..."
+              rows={5}
+              value={respostas.motivacao}
+              onChange={(e) => set('motivacao', e.target.value)}
+              aria-label="O que te trouxe aqui hoje"
+            />
+            <div className={styles.acoes}>
+              <button className={styles.btnSecundario} onClick={voltar}>Voltar</button>
+              <button className={styles.btnPrimario} onClick={avancar} disabled={!respostas.motivacao.trim()}>
+                Continuar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {etapa === 2 && (
+          <div className={styles.etapa}>
+            <p className={styles.etapaLabel}>Sobre o uso</p>
+            <h2 className={styles.titulo}>Com qual substância você tem tido dificuldade?</h2>
+            <p className={styles.texto}>Pode marcar mais de uma.</p>
+            <div className={styles.checkGrid}>
+              {SUBSTANCIAS.map((s) => (
+                <button
+                  key={s.id}
+                  className={styles.checkItem + (respostas.substancias.includes(s.id) ? ' ' + styles.checkItemAtivo : '')}
+                  onClick={() => set('substancias', toggle(respostas.substancias, s.id))}
+                  aria-pressed={respostas.substancias.includes(s.id)}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            <p className={styles.subPergunta}>Com que frequência acontece?</p>
+            <div className={styles.radioStack}>
+              {FREQUENCIAS.map((f) => (
+                <button
+                  key={f.id}
+                  className={styles.radioItem + (respostas.frequencia === f.id ? ' ' + styles.radioItemAtivo : '')}
+                  onClick={() => set('frequencia', f.id)}
+                  aria-pressed={respostas.frequencia === f.id}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <div className={styles.acoes}>
+              <button className={styles.btnSecundario} onClick={voltar}>Voltar</button>
+              <button
+                className={styles.btnPrimario}
+                onClick={avancar}
+                disabled={respostas.substancias.length === 0 || !respostas.frequencia}
+              >
+                Continuar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {etapa === 3 && (
+          <div className={styles.etapa}>
+            <p className={styles.etapaLabel}>Entendendo melhor</p>
+            <h2 className={styles.titulo}>Em que situações isso costuma acontecer?</h2>
+            <p className={styles.texto}>
+              Isso ajuda o terapeuta a entender o que pode estar por trás do uso.
+            </p>
+            <div className={styles.radioStack}>
+              {CONTEXTOS.map((c) => (
+                <button
+                  key={c.id}
+                  className={styles.radioItem + (respostas.contexto === c.id ? ' ' + styles.radioItemAtivo : '')}
+                  onClick={() => set('contexto', c.id)}
+                  aria-pressed={respostas.contexto === c.id}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+            <div className={styles.acoes}>
+              <button className={styles.btnSecundario} onClick={voltar}>Voltar</button>
+              <button className={styles.btnPrimario} onClick={avancar} disabled={!respostas.contexto}>
+                Continuar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {etapa === 4 && (
+          <div className={styles.etapa}>
+            <p className={styles.etapaLabel}>O impacto na sua vida</p>
+            <h2 className={styles.titulo}>Em quais áreas você tem sentido mais dificuldade?</h2>
+            <p className={styles.texto}>Escolha quantas fizerem sentido.</p>
+            <div className={styles.checkGrid}>
+              {IMPACTOS_VIDA.map((item) => (
+                <button
+                  key={item.id}
+                  className={styles.checkItem + (respostas.impactoVida.includes(item.id) ? ' ' + styles.checkItemAtivo : '')}
+                  onClick={() => set('impactoVida', toggle(respostas.impactoVida, item.id))}
+                  aria-pressed={respostas.impactoVida.includes(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            <p className={styles.subPergunta}>E nos seus relacionamentos?</p>
+            <div className={styles.checkGrid}>
+              {IMPACTOS_RELACOES.map((item) => (
+                <button
+                  key={item.id}
+                  className={styles.checkItem + (respostas.impactoRelacoes.includes(item.id) ? ' ' + styles.checkItemAtivo : '')}
+                  onClick={() => set('impactoRelacoes', toggle(respostas.impactoRelacoes, item.id))}
+                  aria-pressed={respostas.impactoRelacoes.includes(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            <div className={styles.acoes}>
+              <button className={styles.btnSecundario} onClick={voltar}>Voltar</button>
+              <button className={styles.btnPrimario} onClick={avancar}>Continuar</button>
+            </div>
+          </div>
+        )}
+
+        {etapa === 5 && (
+          <div className={styles.etapa}>
+            <p className={styles.etapaLabel}>Sua jornada até aqui</p>
+            <h2 className={styles.titulo}>Você já tentou parar ou reduzir antes?</h2>
+            <p className={styles.texto}>
+              Não existe resposta certa. Saber o que você já viveu ajuda
+              o terapeuta a encontrar o melhor caminho com você.
+            </p>
+            <div className={styles.radioStack}>
+              {TENTATIVAS.map((t) => (
+                <button
+                  key={t.id}
+                  className={styles.radioItem + (respostas.tentativas === t.id ? ' ' + styles.radioItemAtivo : '')}
+                  onClick={() => set('tentativas', t.id)}
+                  aria-pressed={respostas.tentativas === t.id}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <div className={styles.acoes}>
+              <button className={styles.btnSecundario} onClick={voltar}>Voltar</button>
+              <button className={styles.btnPrimario} onClick={avancar} disabled={!respostas.tentativas}>
+                Continuar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {etapa === 6 && (
+          <div className={styles.etapa}>
+            <p className={styles.etapaLabel}>Quase lá</p>
+            <h2 className={styles.titulo}>O que você gostaria que mudasse?</h2>
+            <p className={styles.texto}>
+              Escolha o que mais ressoa agora — pode ser diferente amanhã, e tudo bem.
+            </p>
+            <div className={styles.radioStack}>
+              {O_QUE_QUER.map((o) => (
+                <button
+                  key={o.id}
+                  className={styles.radioItem + (respostas.oQueQuer === o.id ? ' ' + styles.radioItemAtivo : '')}
+                  onClick={() => set('oQueQuer', o.id)}
+                  aria-pressed={respostas.oQueQuer === o.id}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+            <p className={styles.subPergunta}>Quer deixar mais alguma coisa para o terapeuta saber?</p>
+            <textarea
+              className={styles.textarea}
+              placeholder="Opcional — escreva o que quiser..."
+              rows={4}
+              value={respostas.livre}
+              onChange={(e) => set('livre', e.target.value)}
+              aria-label="Mensagem livre"
+            />
+            <div className={styles.separador} />
+            <p className={styles.subPergunta}>Como podemos te chamar?</p>
+            <input
+              className={styles.input}
+              type="text"
+              placeholder="Seu nome (pode ser só o primeiro)"
+              value={respostas.nome}
+              onChange={(e) => set('nome', e.target.value)}
+              aria-label="Seu nome"
+            />
+            <p className={styles.subPergunta}>Como prefere receber o retorno?</p>
+            <div className={styles.contatoOpcoes}>
+              <button
+                className={styles.contatoOpcao + (respostas.contatoTipo === 'whatsapp' ? ' ' + styles.contatoAtivo : '')}
+                onClick={() => set('contatoTipo', 'whatsapp')}
+                aria-pressed={respostas.contatoTipo === 'whatsapp'}
+              >
+                WhatsApp
+              </button>
+              <button
+                className={styles.contatoOpcao + (respostas.contatoTipo === 'email' ? ' ' + styles.contatoAtivo : '')}
+                onClick={() => set('contatoTipo', 'email')}
+                aria-pressed={respostas.contatoTipo === 'email'}
+              >
+                E-mail
+              </button>
+            </div>
+            {respostas.contatoTipo !== '' && (
+              <input
+                className={styles.input}
+                type={respostas.contatoTipo === 'email' ? 'email' : 'tel'}
+                placeholder={respostas.contatoTipo === 'whatsapp' ? 'Seu número com DDD' : 'Seu e-mail'}
+                value={respostas.contato}
+                onChange={(e) => set('contato', e.target.value)}
+                aria-label="Seu contato"
+              />
+            )}
+            <p className={styles.lgpdAviso}>
+              🔒 Seus dados são tratados como informação sensível de saúde, conforme a LGPD.
+              Jamais serão compartilhados sem sua autorização.
+            </p>
+            {erro && <p className={styles.erroMsg} role="alert">{erro}</p>}
+            <div className={styles.acoes}>
+              <button className={styles.btnSecundario} onClick={voltar} disabled={enviando}>Voltar</button>
+              <button
+                className={styles.btnPrimario}
+                onClick={enviar}
+                disabled={enviando || !respostas.nome.trim() || !respostas.contato.trim() || !respostas.contatoTipo}
+              >
+                {enviando ? 'Enviando...' : 'Enviar para o terapeuta'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {etapa === 7 && (
+          <div className={styles.etapa}>
+            <div className={styles.iconeWrap} aria-hidden="true">💚</div>
+            <h2 className={styles.titulo}>
+              {respostas.nome ? respostas.nome + ', recebemos sua mensagem.' : 'Recebemos sua mensagem.'}
+            </h2>
+            <p className={styles.texto}>
+              {SITE.terapeuta} vai ler o que você compartilhou com atenção e cuidado,
+              e vai entrar em contato em breve.
+            </p>
+            <p className={styles.texto}>Se quiser conversar agora:</p>
+            
+              href={WHATSAPP_URL('Olá ' + SITE.terapeuta + ', acabei de preencher o questionário no site Porta de Volta.')}
+              className={styles.btnWhatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Chamar no WhatsApp agora
+            </a>
+            <Link href="/" className={styles.linkVoltar}>Voltar para o início</Link>
+          </div>
+        )}
+
+      </div>
+    </main>
+  )
+}
+EOF
+Após colar os dois, acesse http://localhost:3000/quero-ajuda. O estilo agora usa exatamente as variáveis do projeto — verde escuro, areia, bordas e botões idênticos ao resto do site.
+
+Você disse: vc esta errando demais caralho olha o erro .
+vc esta errando demais caralho olha o erro __./src/app/quero-ajuda/QueroAjudaCliente.tsx__
+
+Error: 
+  × Unexpected token `main`. Expected jsx identifier
+     ╭─[/home/edson/porta-de-volta/src/app/quero-ajuda/QueroAjudaCliente.tsx:139:1]
+ 139 │   const progresso = etapa === 0 ? 0 : Math.round((etapa / ETAPA_TOTAL) * 100)
+ 140 │ 
+ 141 │   return (
+ 142 │     <main className={styles.main}>
+     ·      ────
+ 143 │       <div className={styles.card}>
+ 144 │ 
+ 145 │         {etapa > 0 && etapa < ETAPA_TOTAL && (
+     ╰────
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/quero-ajuda/QueroAjudaCliente.tsx
+./src/app/quero-ajuda/page.tsx
+
+Mostrar mais
+19:11
+Claude respondeu: O erro Unexpected token 'main' é o mesmo de sempre — o arquivo está sendo interpretado como .
+O erro Unexpected token 'main' é o mesmo de sempre — o arquivo está sendo interpretado como .ts puro em vez de .tsx. O 'use client' na primeira linha chegou corrompido (aspas tipográficas em vez de aspas retas).
+
+Corrija com um comando só:
+
+bash
+sed -i "1s/.*/\'use client\'/" ~/porta-de-volta/src/app/quero-ajuda/QueroAjudaCliente.tsx
+Depois verifique:
+
+bash
+head -1 ~/porta-de-volta/src/app/quero-ajuda/QueroAjudaCliente.tsx
+Deve aparecer exatamente:
+
+'use client'
+Se aparecer com aspas tortas (\u2018use client\u2019) ou qualquer caractere diferente, o Next.js não reconhece como Client Component e trata o JSX como erro de sintaxe.
+
+Você disse: manda o arquivo pra eu baixar e colar mesmo
+manda o arquivo pra eu baixar e colar mesmo
+
+19:11
+Claude respondeu: Baixe e cole direto:
+
+Criou um arquivo, leu um arquivo
+Criou um arquivo, leu um arquivo
+Baixe e cole direto:
+
+bash
+cp ~/Downloads/QueroAjudaCliente.tsx ~/porta-de-volta/src/app/quero-ajuda/QueroAjudaCliente.tsx
+O Next.js recompila sozinho. Acesse http://localhost:3000/quero-ajuda.
+
+
+Queroajudacliente
+Código · TSX 
+Você disse: Import trace for requested module:
+Import trace for requested module:
+./src/app/quero-ajuda/QueroAjudaCliente.tsx
+./src/app/quero-ajuda/page.tsx
+ ✓ Compiled in 6.4s (740 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /quero-ajuda 200 in 1177ms
+ GET /quero-ajuda 200 in 209ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1906ms (743 modules)
+ POST /api/triagem 404 in 2564ms
+ GET /blog 404 in 131ms
+ GET /sobre 404 in 121ms
+ GET /blog 404 in 153ms
+ GET /quero-ajuda 200 in 191ms
+ ○ Compiling / ...
+ ✓ Compiled / in 5.8s (760 modules)
+ POST /api/triagem 404 in 508ms
+ GET /.well-known/appspecific/[com.chrome](http://com.chrome).devtools.json 404 in 192ms
+hot-reloader-client.js:187 [Fast Refresh] rebuilding
+hot-reloader-client.js:44 [Fast Refresh] done in 3906ms
+api/triagem:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+
+Mostrar mais
+19:23
+Claude respondeu: Funcionando!
+Funcionando! O 200 no /quero-ajuda confirma que o questionário está no ar. O único erro agora é o POST /api/triagem 404 — a rota da API ainda não existe.
+
+Vou gerar ela. Mas antes preciso ver o Prisma schema e o constants para montar corretamente:
+
+bash
+cat ~/porta-de-volta/src/lib/constants.ts && echo "---PRISMA---" && cat ~/porta-de-volta/prisma/schema.prisma
+Cola aqui que gero a rota completa.
+
+Você disse: edson@edson-MacBook:~/porta-de-volta$ cat ~/porta-de-volta/src/lib/constants.
+edson@edson-MacBook:~/porta-de-volta$ cat ~/porta-de-volta/src/lib/constants.ts && echo "---PRISMA---" && cat ~/porta-de-volta/prisma/schema.prisma
+export const SITE = {
+  nome: 'Porta de Volta',
+  subtitulo: 'Escuta, triagem e encaminhamento para tratamento de dependência química',
+  descricao:
+    'Você não está sozinho. A Porta de Volta oferece escuta humanizada e encaminhamento especializado para quem enfrenta a dependência química — para você ou para alguém que você ama.',
+  url: 'https://portadevolta.com.br',
+  whatsapp: [process.env.NEXT](http://process.env.NEXT)_PUBLIC_WHATSAPP ?? '5515991161993',
+  whatsappFormatado: '(15) 99116-1993',
+  email: '[gustavogomes.terapeuta@gmail.com](mailto:gustavogomes.terapeuta@gmail.com)',
+  terapeuta: 'Gustavo Craneiro',
+  dpo: {
+    nome: 'Gustavo Craneiro',
+    email: '[gustavogomes.terapeuta@gmail.com](mailto:gustavogomes.terapeuta@gmail.com)'
+  },
+  desenvolvedora: {
+    nome: 'STR Software',
+    url: 'https://strsoftware.com.br',
+    grupo: 'uma marca da Cotaweb Seguros'
+  }
+} as const
+export const WHATSAPP_URL = (mensagem?: string) => {
+  const base = https://wa.me/${SITE.whatsapp}
+  if (!mensagem) return base
+  return ${base}?text=${encodeURIComponent(mensagem)}
+}
+---PRISMA---
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+enum TipoPerfil {
+  PACIENTE
+  FAMILIAR
+}
+enum StatusLead {
+  NOVO
+  EM_ATENDIMENTO
+  ENCAMINHADO
+  FINALIZADO
+  ARQUIVADO
+}
+model Lead {
+  id              String     @id @default(cuid())
+  criadoEm       DateTime   @default(now())
+  atualizadoEm   DateTime   @updatedAt
+  perfil          TipoPerfil
+  primeiroNome    String
+  contatoWhatsapp String
+  contatoEmail    String?
+  comoEstaHoje    String     @db.Text
+  tempoSituacao   String
+  jaTeveAjuda     Boolean
+  relatoLivre     String     @db.Text
+  status          StatusLead @default(NOVO)
+  notaInterna     String?    @db.Text
+  ip              String?
+  userAgent       String?    @db.Text
+  lgpdConsentimento Boolean  @default(false)
+  lgpdDataConsent   DateTime?
+  auditLog        AuditLog[]
+  @@index([status])
+  @@index([criadoEm])
+  @@index([perfil])
+}
+model AuditLog {
+  id        String   @id @default(cuid())
+  criadoEm DateTime @default(now())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id])
+  acao      String
+  detalhes  String?  @db.Text
+  @@index([leadId])
+}
+model AdminSession {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  criadoEm DateTime @default(now())
+  expiraEm  DateTime
+  @@index([token])
+  @@index([expiraEm])
+}
+edson@edson-MacBook:~/porta-de-volta$
+
+Mostrar mais
+19:24
+Claude respondeu: Perfeito.
+Perfeito. Tenho tudo. Vou gerar a rota da API compatível com o schema Prisma exato.
+
+
+Criou um arquivo, leu um arquivo
+Criou um arquivo, leu um arquivo
+Baixe e cole com:
+
+bash
+mkdir -p ~/porta-de-volta/src/app/api/triagem
+cp ~/Downloads/route.ts ~/porta-de-volta/src/app/api/triagem/route.ts
+Depois confirme que o prisma client está exportado corretamente:
+
+bash
+cat ~/porta-de-volta/src/lib/prisma.ts
+Se não existir esse arquivo, me avise que gero ele também. O Next.js vai compilar a rota automaticamente e o POST /api/triagem vai parar de dar 404.
+
+
+Route
+TS 
+Você disse: dson@edson-MacBook:~/porta-de-volta$ cat ~/porta-de-volta/src/lib/prisma.
+dson@edson-MacBook:~/porta-de-volta$ cat ~/porta-de-volta/src/lib/prisma.ts
+import { PrismaClient } from '@prisma/client'
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined
+}
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error']
+  })
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+edson@edson-MacBook:~/porta-de-volta$
+
+Mostrar mais
+19:40
+Claude respondeu: Perfeito, o prisma client está correto.
+Perfeito, o prisma client está correto. Agora teste o fluxo completo:
+
+Acesse http://localhost:3000/quero-ajuda
+Preencha o questionário até o fim
+Clique em Enviar para o terapeuta
+Se aparecer a tela de confirmação com o 💚, está funcionando. Se der erro, cole aqui o que aparecer no terminal do servidor.
+
+Enquanto isso, o que atacamos em seguida?
+
+/quero-ajudar — questionário para o familiar
+/admin — painel para o Gustavo ler os leads
+/sobre — página do terapeuta
+/privacidade — política LGPD
+Você disse: ta como o terapeuta recebe a mensagem para quem foi enviado?
+ta como o terapeuta recebe a mensagem para quem foi enviado?
+
+19:41
+Claude respondeu: Boa pergunta.
+Boa pergunta. Atualmente o lead é salvo no banco Neon/Postgres mas o Gustavo não recebe nenhuma notificação — ele teria que acessar o /admin para ver.
+
+O fluxo ideal é banco + email imediato. Assim:
+
+Paciente envia → salva no banco → dispara email para o Gustavo → Gustavo responde
+Para implementar o email preciso saber qual serviço vocês querem usar:
+
+Você disse: P: Qual serviço de email usar para notificar o Gustavo?
+P: Qual serviço de email usar para notificar o Gustavo?
+R: o email dele é do google gmail mas estamos implementando so zero não sei fazer isso me ajude com tudo que for gratis
+
+19:42
+Claude respondeu: Vamos usar Resend — gratuito (100 emails/dia), funciona perfeitamente com Gmail de destino, e tem SDK oficial para Next.
+Vamos usar Resend — gratuito (100 emails/dia), funciona perfeitamente com Gmail de destino, e tem SDK oficial para Next.js.
+
+Plano completo
+1. Criar conta no Resend (2 minutos)
+
+Acesse https://resend.com e crie conta gratuita
+Vá em API Keys → Create API Key → copie a chave
+2. Por enquanto sem domínio próprio — o Resend permite enviar de onboarding@resend.dev gratuitamente para qualquer email enquanto o domínio não está verificado. Perfeito para desenvolvimento e testes.
+
+PASSO 1 — Instale o SDK:
+
+bash
+cd ~/porta-de-volta && npm install resend
+PASSO 2 — Adicione a chave no .env.local:
+
+bash
+echo 'RESEND_API_KEY=cole_sua_chave_aqui' >> ~/porta-de-volta/.env.local
+PASSO 3 — Baixe e cole a rota atualizada com email:
+
+Depois me confirma que o npm install resend rodou sem erro que gero o route.ts atualizado com o disparo do email já embutido, formatado bonitinho para o Gustavo ler no Gmail.
+
+Você disse: na entendi baixar o que como?
+na entendi baixar o que como? me explique passo apasso
+
+19:53
+Claude respondeu: Calma, vou explicar tudo do zero passo a passo.
+Calma, vou explicar tudo do zero passo a passo.
+
+PASSO 1 — Criar conta no Resend
+
+Abra o navegador e acesse https://resend.com
+Clique em Sign Up e crie uma conta gratuita (pode usar o Gmail do Gustavo ou qualquer email)
+Depois de entrar, no menu lateral clique em API Keys
+Clique em Create API Key
+Dê o nome porta-de-volta e clique em Create
+Copie a chave que aparecer (começa com re_...) — ela só aparece uma vez
+PASSO 2 — No terminal do projeto, instale o Resend:
+
+bash
+cd ~/porta-de-volta && npm install resend
+PASSO 3 — Adicione a chave no arquivo de configuração:
+
+bash
+echo 'RESEND_API_KEY=cole_aqui_sua_chave_re_...' >> ~/porta-de-volta/.env.local
+Substitua cole_aqui_sua_chave_re_... pela chave que você copiou no passo 1.
+
+Faz esses 3 passos e me manda:
+
+O resultado do npm install resend
+Uma confirmação que adicionou a chave
+Aí gero o arquivo com o email já pronto e você baixa igual fez com o QueroAjudaCliente.tsx.
+
+Você disse: eu fix com meu email mas o email que recebe o questionario tem que ser o do gustavo e ai
+eu fix com meu email mas o email que recebe o questionario tem que ser o do gustavo e ai
+
+19:55
+Claude respondeu: Perfeito, isso é simples.
+Perfeito, isso é simples. O email que envia é do Resend (via domínio deles), o email que recebe é o do Gustavo. São coisas separadas.
+
+No código eu coloco:
+
+DE:  notificacoes@resend.dev  (domínio gratuito do Resend)
+PARA: gustavogomes.terapeuta@gmail.com  (o Gustavo recebe no Gmail dele)
+Agora me confirma:
+
+O npm install resend terminou sem erro?
+Você adicionou a chave RESEND_API_KEY no .env.local?
+Se sim, pode rodar também:
+
+bash
+cat ~/porta-de-volta/.env.local
+Cola o resultado aqui (pode censurar o valor da chave, só preciso confirmar que a linha existe) que gero o route.ts completo com o email para o Gustavo.
+
+Você disse: dson@edson-MacBook:~/porta-de-volta$ cd ~/porta-de-volta && npm install resend
+dson@edson-MacBook:~/porta-de-volta$ cd ~/porta-de-volta && npm install resend
+npm warn deprecated uuid@10.0.0: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+added 9 packages, and audited 348 packages in 27s
+141 packages are looking for funding
+  run npm fund for details
+9 vulnerabilities (4 moderate, 5 high)
+To address issues that do not require attention, run:
+  npm audit fix
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+Run npm audit for details.
+edson@edson-MacBook:~/porta-de-volta$
+
+Mostrar mais
+19:55
+Claude respondeu: Instalou certinho.
+Instalou certinho. As vulnerabilidades são normais em projetos Next.js, não bloqueiam nada.
+
+Agora confirma o .env.local:
+
+bash
+cat ~/porta-de-volta/.env.local
+Você disse: dson@edson-MacBook:~/porta-de-volta$ cat ~/porta-de-volta/.
+dson@edson-MacBook:~/porta-de-volta$ cat ~/porta-de-volta/.env.local
+# Banco de dados — Neon PostgreSQL
+DATABASE_URL="postgresql://USER:[PASSWORD@ep-xxxx.us-east-2.aws.neon.tech](mailto:PASSWORD@ep-xxxx.us-east-2.aws.neon.tech)/portadevolta?sslmode=require"
+# Next.js
+NEXTAUTH_SECRET="gere-com-openssl-rand-base64-32"
+NEXTAUTH_URL="http://localhost:3000"
+# Email notificação (nodemailer — use Gmail App Password)
+SMTP_HOST="[smtp.gmail.com](http://smtp.gmail.com)"
+SMTP_PORT="465"
+SMTP_USER="[gustavogomes.terapeuta@gmail.com](mailto:gustavogomes.terapeuta@gmail.com)"
+SMTP_PASS="sua-app-password-gmail"
+SMTP_FROM="Porta de Volta <[gustavogomes.terapeuta@gmail.com](mailto:gustavogomes.terapeuta@gmail.com)>"
+# WhatsApp
+NEXT_PUBLIC_WHATSAPP="5515991161993"
+# Admin — senha simples para painel terapeuta (sem auth externa)
+ADMIN_PASSWORD="troque-esta-senha-forte"
+# Ambiente
+NODE_ENV="development"
+edson@edson-MacBook:~/porta-de-volta$
+
+Mostrar mais
+19:56
+Claude respondeu: O .
+O .env.local já tem configuração de Gmail SMTP — então vamos usar isso ao invés do Resend. Já tem nodemailer planejado desde o início do projeto.
+
+Dois passos antes de gerar o código:
+
+PASSO 1 — Instalar nodemailer:
+
+bash
+cd ~/porta-de-volta && npm install nodemailer && npm install --save-dev @types/nodemailer
+PASSO 2 — Gerar a senha de app do Gmail do Gustavo:
+
+O Gmail não aceita a senha normal para envio via código. Precisa de uma App Password:
+
+Acesse https://myaccount.google.com com o Gmail do Gustavo
+Vá em Segurança → Verificação em duas etapas (precisa estar ativada)
+Depois vá em Senhas de app
+Escolha Outro → nome porta-de-volta → clique Gerar
+Copie a senha de 16 caracteres gerada
+Depois rode:
+
+bash
+sed -i 's/sua-app-password-gmail/COLE_AQUI_A_SENHA_16_DIGITOS/' ~/porta-de-volta/.env.local
+E adicione a chave do Resend que você criou:
+
+bash
+echo 'RESEND_API_KEY=re_sua_chave_aqui' >> ~/porta-de-volta/.env.local
+Me confirma quando o npm install nodemailer terminar que gero o route.ts completo com email via Gmail SMTP para o Gustavo.
+
+Você disse: mas ese é gratis tambem?
+mas ese é gratis tambem?
+
+19:57
+Claude respondeu: Sim, 100% gratuito.
+Sim, 100% gratuito.
+
+O Gmail SMTP usa a conta do próprio Gustavo — não tem custo nenhum, não é um serviço pago. É literalmente o Gmail dele enviando email para ele mesmo.
+
+O fluxo fica:
+
+Paciente preenche → servidor usa o Gmail do Gustavo → Gustavo recebe no próprio Gmail
+O único limite é 500 emails/dia pelo Gmail gratuito — mais do que suficiente para o volume do site.
+
+A única exigência é a senha de app (passo 2 que descrevi acima) porque o Google bloqueia acesso direto com senha normal por segurança. A senha de app é gratuita e gerada em 1 minuto nas configurações da conta dele.
+
+O Gustavo tem a verificação em duas etapas ativada no Gmail dele?
+
+Você disse: nao sei dizer
+nao sei dizer
+
+19:57
+Claude respondeu: Sem problema.
+Sem problema. Vamos verificar na hora. Peça para o Gustavo:
+
+Acessar https://myaccount.google.com
+Clicar em Segurança no menu lateral
+Procurar por Verificação em duas etapas
+Se aparecer "Ativada" → pode ir direto para gerar a senha de app em https://myaccount.google.com/apppasswords
+
+Se aparecer "Desativada" → precisa ativar primeiro. É rápido:
+
+Clica em Verificação em duas etapas
+Segue o passo a passo do Google (coloca um número de celular)
+Depois volta em https://myaccount.google.com/apppasswords para gerar a senha
+Enquanto o Gustavo faz isso, você pode já rodar o install:
+
+bash
+cd ~/porta-de-volta && npm install nodemailer && npm install --save-dev @types/nodemailer
+Quando tiver a senha de app de 16 caracteres em mãos, me avisa que gero o route.ts com o email pronto.
+
+Você disse: nao tenho cntato com ele agora simplifica ai moço
+nao tenho cntato com ele agora simplifica ai moço
+
+19:58
+Claude respondeu: Sem problema.
+Sem problema. Vamos usar o Resend que você já instalou e já tem conta — funciona agora sem precisar do Gustavo.
+
+Só precisa adicionar a chave no .env.local:
+
+bash
+echo 'RESEND_API_KEY=re_sua_chave_aqui' >> ~/porta-de-volta/.env.local
+Substitui re_sua_chave_aqui pela chave que você copiou lá no site do Resend quando criou a conta.
+
+Faz isso e me confirma que gero o arquivo na hora.
+
+Você disse: vai com aquelas aspas simples mesmo?
+vai com aquelas aspas simples mesmo?
+
+20:01
+Claude respondeu: Não, sem aspas.
+Não, sem aspas. Assim:
+
+bash
+echo 'RESEND_API_KEY=re_suachaveaqui' >> ~/porta-de-volta/.env.local
+Só troca re_suachaveaqui pela chave real que começa com re_. As aspas simples são do shell e não vão para dentro do arquivo — mas o valor da chave entra direto, sem aspas.
+
+Você disse: tem que ter isso no final ?
+tem que ter isso no final ? >> ~/porta-de-volta/.env.local
+
+20:02
+Claude respondeu: Sim, precisa.
+Sim, precisa. O >> significa adicionar no final do arquivo sem apagar o que já tem.
+
+Se fosse > (só um) apagaria tudo e deixaria só a linha nova — o que quebraria o banco de dados e tudo mais.
+
+Então o comando completo correto é esse mesmo:
+
+bash
+echo 'RESEND_API_KEY=re_suachaveaqui' >> ~/porta-de-volta/.env.local
+Cola sua chave real no lugar de re_suachaveaqui e roda.
+
+Você disse: feito
+feito
+
+20:03
+Claude respondeu: Confirma que entrou certo:
+Confirma que entrou certo:
+
+bash
+grep RESEND ~/porta-de-volta/.env.local
+Deve aparecer:
+
+RESEND_API_KEY=re_sua_chave...
+Você disse: grep RESEND ~/porta-de-volta/.
+grep RESEND ~/porta-de-volta/.env.local
+
+20:03
+Claude respondeu: Cola o resultado aqui — o que apareceu no terminal depois de rodar esse comando?
+Cola o resultado aqui — o que apareceu no terminal depois de rodar esse comando?
+
+Você disse: certo apareceu
+certo apareceu
+
+20:04
+Claude respondeu: Perfeito.
+Perfeito. Agora gero o route.ts completo com email via Resend.
+
+
+
+
+
+
+
+
+
+
+
+

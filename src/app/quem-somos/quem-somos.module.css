@@ -1,0 +1,231 @@
+.main {
+  min-height: 100vh;
+  background: #f9fafb;
+}
+
+.hero {
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%);
+  padding: 80px 24px 72px;
+  text-align: center;
+}
+
+.heroInner {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.tag {
+  display: inline-block;
+  background: rgba(255,255,255,0.15);
+  color: #d1fae5;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 14px;
+  border-radius: 999px;
+  margin-bottom: 20px;
+}
+
+.heroTitulo {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.15;
+  margin: 0 0 20px;
+}
+
+.heroSubtitulo {
+  font-size: 1.1rem;
+  color: #a7f3d0;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.secao {
+  padding: 72px 24px;
+}
+
+.secaoDestaque {
+  padding: 72px 24px;
+  background: #ffffff;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.blocoTexto {
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.secaoTitulo {
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
+  font-weight: 700;
+  color: #064e3b;
+  margin: 0 0 32px;
+  text-align: center;
+}
+
+.paragrafo {
+  font-size: 1.05rem;
+  color: #374151;
+  line-height: 1.8;
+  margin: 0 0 16px;
+}
+
+.valoresGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin-top: 8px;
+}
+
+.valorCard {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+}
+
+.valorIcone {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.valorTitulo {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #065f46;
+  margin: 0 0 8px;
+}
+
+.valorTexto {
+  font-size: 0.95rem;
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.terapeutaCard {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+  background: #ffffff;
+  border: 1px solid #d1fae5;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 2px 16px rgba(6,78,59,0.06);
+}
+
+@media (max-width: 600px) {
+  .terapeutaCard {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 28px 20px;
+  }
+}
+
+.terapeutaAvatar {
+  font-size: 4rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.terapeutaInfo .tag {
+  background: #d1fae5;
+  color: #065f46;
+  margin-bottom: 12px;
+}
+
+.terapeutaNome {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #064e3b;
+  margin: 0 0 16px;
+}
+
+.secaoCta {
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.ctaTitulo {
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 16px;
+}
+
+.ctaTexto {
+  font-size: 1.05rem;
+  color: #a7f3d0;
+  line-height: 1.7;
+  margin: 0 0 40px;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ctaBotoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
+
+.btnPrimario {
+  display: inline-block;
+  background: #10b981;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 14px 28px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.btnPrimario:hover {
+  background: #059669;
+}
+
+.btnSecundario {
+  display: inline-block;
+  background: rgba(255,255,255,0.12);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 14px 28px;
+  border-radius: 12px;
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.3);
+  transition: background 0.2s;
+}
+
+.btnSecundario:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.btnWhatsapp {
+  display: inline-block;
+  background: #25d366;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 14px 28px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.btnWhatsapp:hover {
+  background: #1ebe5d;
+}

@@ -1,0 +1,220 @@
+.main { padding-bottom: 4rem; }
+
+.hero {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 60%, #bbf7d0 100%);
+  padding: 5rem 1.5rem 4rem;
+  text-align: center;
+}
+.heroInner { max-width: 720px; margin: 0 auto; }
+.tag {
+  display: inline-block;
+  background: #16a34a22;
+  color: #15803d;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  margin-bottom: 1.25rem;
+}
+.heroTitulo {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 800;
+  color: #14532d;
+  line-height: 1.2;
+  margin: 0 0 1rem;
+}
+.heroSubtitulo {
+  font-size: 1.05rem;
+  color: #374151;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.secao { padding: 4rem 1.5rem; }
+.secaoDestaque { padding: 4rem 1.5rem; background: #f9fafb; }
+.container { max-width: 1100px; margin: 0 auto; }
+.secTitulo {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 800;
+  color: #14532d;
+  margin: 0 0 0.5rem;
+  text-align: center;
+}
+.secSubtitulo {
+  font-size: 1rem;
+  color: #6b7280;
+  text-align: center;
+  margin: 0 0 2.5rem;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+.tagBtn {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tagBtn:hover { border-color: #16a34a; color: #16a34a; }
+.tagBtnAtiva { background: #16a34a; color: #fff; border-color: #16a34a; }
+
+.artigosGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+.artigoCard {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  transition: transform 0.25s, box-shadow 0.25s;
+  display: flex;
+  flex-direction: column;
+}
+.artigoCard:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+.artigoImgWrap { position: relative; }
+.artigoImg { width: 100%; height: 200px; object-fit: cover; display: block; }
+.artigoTag {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background: #16a34a;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+.artigoBody { padding: 1.25rem 1.5rem 1.5rem; flex: 1; display: flex; flex-direction: column; }
+.artigoTitulo { font-size: 1rem; font-weight: 700; color: #111827; margin: 0 0 0.6rem; line-height: 1.4; }
+.artigoResumo { font-size: 0.875rem; color: #6b7280; line-height: 1.6; margin: 0 0 1.25rem; flex: 1; }
+.artigoLink { font-size: 0.875rem; font-weight: 600; color: #16a34a; text-decoration: none; }
+.artigoLink:hover { text-decoration: underline; }
+
+.clinicasGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+.clinicaCard {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  transition: transform 0.25s;
+}
+.clinicaCard:hover { transform: translateY(-4px); }
+.clinicaImgWrap { overflow: hidden; }
+.clinicaImg { width: 100%; height: 180px; object-fit: cover; display: block; transition: transform 0.4s; }
+.clinicaCard:hover .clinicaImg { transform: scale(1.05); }
+.clinicaBody { padding: 1.25rem; }
+.clinicaNome { font-size: 1rem; font-weight: 700; color: #111827; margin: 0 0 0.4rem; }
+.clinicaCidade { font-size: 0.85rem; color: #6b7280; margin: 0 0 0.25rem; }
+.clinicaEsp { font-size: 0.85rem; color: #6b7280; margin: 0 0 1rem; }
+.clinicaBtn {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #16a34a;
+  text-decoration: none;
+}
+.clinicaBtn:hover { text-decoration: underline; }
+
+.metodGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+.metodCard {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border-top: 4px solid #16a34a;
+}
+.metodIcone { font-size: 2rem; display: block; margin-bottom: 0.75rem; }
+.metodTitulo { font-size: 1rem; font-weight: 700; color: #14532d; margin: 0 0 0.6rem; }
+.metodTexto { font-size: 0.875rem; color: #4b5563; line-height: 1.65; margin: 0; }
+
+.faqLista { max-width: 780px; margin: 0 auto; }
+.faqItem {
+  border-bottom: 1px solid #e5e7eb;
+}
+.faqPergunta {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 1.25rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+  cursor: pointer;
+  text-align: left;
+}
+.faqPergunta:hover { color: #16a34a; }
+.faqIcone { font-size: 1.25rem; color: #16a34a; flex-shrink: 0; }
+.faqResposta {
+  font-size: 0.9rem;
+  color: #4b5563;
+  line-height: 1.7;
+  padding: 0 0 1.25rem;
+  margin: 0;
+}
+
+.cta {
+  background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+  padding: 4rem 1.5rem;
+  text-align: center;
+}
+.ctaTitulo { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 800; color: #fff; margin: 0 0 0.75rem; }
+.ctaTexto { font-size: 1rem; color: #bbf7d0; margin: 0 0 2rem; line-height: 1.6; }
+.ctaBotoes { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.btnPrimario {
+  background: #fff;
+  color: #14532d;
+  font-weight: 700;
+  padding: 0.85rem 2rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: background 0.2s;
+}
+.btnPrimario:hover { background: #f0fdf4; }
+.btnSecundario {
+  background: transparent;
+  color: #fff;
+  font-weight: 600;
+  padding: 0.85rem 2rem;
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,0.5);
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+.btnSecundario:hover { border-color: #fff; }
+
+@media (max-width: 640px) {
+  .artigosGrid { grid-template-columns: 1fr; }
+  .clinicasGrid { grid-template-columns: 1fr 1fr; }
+  .metodGrid { grid-template-columns: 1fr; }
+}
+@media (max-width: 400px) {
+  .clinicasGrid { grid-template-columns: 1fr; }
+}
