@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { useParams, useRouter } from 'next/navigation'
 import styles from './lead-detalhe.module.css'
 
@@ -32,6 +33,7 @@ const STATUS_LABEL: Record<Lead['status'], string> = {
 }
 
 export default function LeadDetalheCliente() {
+  const { data: session, status } = useSession()
   const params = useParams()
   const router = useRouter()
   const id = params?.id as string
@@ -44,72 +46,71 @@ export default function LeadDetalheCliente() {
   const [novoStatus, setNovoStatus] = useState<Lead['status']>('NOVO')
 
   useEffect(() => {
-    const ok = sessionStorage.getItem('admin_ok')
-    if (ok !== '1') { router.push('/admin'); return }
-    fetch('/api/admin/leads/' + id, { headers: { 'x-admin-token': process.env.NEXT_PUBLIC_ADMIN_SENHA ?? 'portadevolta2025' } })
-      .then((r) => r.json())
+    if (status === 'unauthenticated') { router.push('/admin/login'); return }
+    if (status !== 'authenticated') return
+    fetch('/api/leads/' + id)
+      .then((r) => {
+        if (r.status === 401) { router.push('/admin/login'); return null }
+        return r.json()
+      })
       .then((data) => {
+        if (!data) return
         setLead(data.lead)
         setNota(data.lead?.notaInterna ?? '')
         setNovoStatus(data.lead?.status ?? 'NOVO')
       })
       .finally(() => setCarregando(false))
-  }, [id, router])
+  }, [id, router, status])
 
   async function salvar() {
     setSalvando(true)
     try {
-      await fetch('/api/admin/leads/' + id, {
+      const res = await fetch('/api/leads/' + id, {
         method: 'PATCH',
-        headers: { 'x-admin-token': process.env.NEXT_PUBLIC_ADMIN_SENHA ?? 'portadevolta2025', 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: novoStatus, notaInterna: nota }),
       })
-      setSalvoOk(true)
-      setTimeout(() => setSalvoOk(false), 3000)
+      if (res.ok) {
+        setSalvoOk(true)
+        setTimeout(() => setSalvoOk(false), 3000)
+      }
     } finally {
       setSalvando(false)
     }
   }
 
-  function imprimir() { window.print() }
-
-  if (carregando) return <div className={styles.loading}>Carregando ficha...</div>
+  if (status === 'loading' || carregando) return <div className={styles.loading}>Carregando ficha...</div>
+  if (!session) return null
   if (!lead) return <div className={styles.loading}>Lead não encontrado.</div>
-
-  const secoes = lead.relatoLivre ? lead.relatoLivre.split('\n\n---\n\n') : []
 
   return (
     <main className={styles.main}>
-
-      <div className={styles.topbar + ' ' + styles.semPrint}>
+      <div className={styles.topbar}>
         <button className={styles.btnVoltar} onClick={() => router.push('/admin')}>
           ← Voltar ao painel
         </button>
-        <button className={styles.btnImprimir} onClick={imprimir}>
-          ð¨️ Imprimir ficha
+        <button className={styles.btnImprimir} onClick={() => window.print()}>
+          Imprimir ficha
         </button>
       </div>
 
       <div className={styles.fichaHeader}>
-        <div className={styles.fichaAvatar} aria-hidden="true">
-          {lead.perfil === 'PACIENTE' ? 'ð¤' : 'ð¨âð©âð¦'}
-        </div>
         <div>
           <h1 className={styles.fichaNome}>{lead.primeiroNome}</h1>
           <div className={styles.fichaMeta}>
             <span className={styles.perfilBadge + ' ' + (lead.perfil === 'PACIENTE' ? styles.perfilPaciente : styles.perfilFamiliar)}>
               {lead.perfil === 'PACIENTE' ? 'Paciente' : 'Familiar'}
             </span>
-            <span className={styles.metaItem}>ð {new Date(lead.criadoEm).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-            {lead.lgpdConsentimento && <span className={styles.metaItem}>ð LGPD aceita</span>}
+            <span className={styles.metaItem}>
+              {new Date(lead.criadoEm).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            </span>
+            {lead.lgpdConsentimento && <span className={styles.metaItem}>LGPD aceita</span>}
           </div>
         </div>
       </div>
 
       <div className={styles.grid}>
-
         <div className={styles.colEsq}>
-
           <div className={styles.secao}>
             <h2 className={styles.secaoTitulo}>Contato</h2>
             <div className={styles.campo}>
@@ -140,21 +141,17 @@ export default function LeadDetalheCliente() {
 
           <div className={styles.secao}>
             <h2 className={styles.secaoTitulo}>Relato completo</h2>
-            {secoes.length > 0 ? secoes.map((s, i) => (
-              <div key={i} className={styles.relatoSecao}>
-                {s.split('\n').map((linha, j) => (
-                  <p key={j} className={linha.toUpperCase() === linha && linha.trim() ? styles.relatoTitulo : styles.relatoTexto}>
-                    {linha}
-                  </p>
-                ))}
-              </div>
-            )) : <p className={styles.relatoTexto}>Nenhum relato registrado.</p>}
+            {lead.relatoLivre ? (
+              lead.relatoLivre.split('\n').map((linha, i) => (
+                <p key={i} className={styles.relatoTexto}>{linha}</p>
+              ))
+            ) : (
+              <p className={styles.relatoTexto}>Nenhum relato registrado.</p>
+            )}
           </div>
-
         </div>
 
-        <div className={styles.colDir + ' ' + styles.semPrint}>
-
+        <div className={styles.colDir}>
           <div className={styles.secao}>
             <h2 className={styles.secaoTitulo}>Status do atendimento</h2>
             <select
@@ -182,9 +179,9 @@ export default function LeadDetalheCliente() {
           <button className={styles.btnSalvar} onClick={salvar} disabled={salvando}>
             {salvando ? 'Salvando...' : 'Salvar alterações'}
           </button>
-          {salvoOk && <p className={styles.salvoOk}>✓ Alterações salvas com sucesso!</p>}
+          {salvoOk && <p className={styles.salvoOk}>Alterações salvas com sucesso!</p>}
 
-          <div className={styles.secao + ' ' + styles.secaoInfo}>
+          <div className={styles.secao}>
             <h2 className={styles.secaoTitulo}>Metadados</h2>
             <div className={styles.campo}>
               <span className={styles.campoLabel}>ID</span>
@@ -199,9 +196,7 @@ export default function LeadDetalheCliente() {
               <span className={styles.campoValor}>{new Date(lead.atualizadoEm).toLocaleDateString('pt-BR')}</span>
             </div>
           </div>
-
         </div>
-
       </div>
     </main>
   )

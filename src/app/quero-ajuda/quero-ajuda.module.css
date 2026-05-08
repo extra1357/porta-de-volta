@@ -242,13 +242,14 @@
 .btnPrimario {
   padding: .75rem 1.5rem;
   background: var(--primario);
-  color: #fff;
-  border: none;
+  color: #ffffff;
+  border: 2px solid var(--primario);
   border-radius: .625rem;
   font-size: .9375rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: opacity .2s, transform .15s;
+  transition: background .2s, transform .15s;
+  letter-spacing: .01em;
 }
 .btnPrimario:hover:not(:disabled) {
   opacity: .9;

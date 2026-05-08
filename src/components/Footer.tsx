@@ -55,6 +55,11 @@ export function Footer() {
             As informações deste site têm caráter informativo e não substituem
             avaliação médica ou psicológica profissional.
           </p>
+          <p className={styles.baseTxt} style={{ marginTop: '.75rem' }}>
+            <Link href="/admin/login" className={styles.linkRestrito}>
+              Acesso restrito
+            </Link>
+          </p>
           <p className={styles.baseTxt} style={{ marginTop: '.375rem' }}>
             Desenvolvido por{' '}
             <a

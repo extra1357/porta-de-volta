@@ -22,7 +22,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob:",
               "font-src 'self'",
-              "connect-src 'self'",
+              "connect-src 'self' https://*.neon.tech wss://*.neon.tech https://api.resend.com",
               "frame-ancestors 'none'"
             ].join('; ')
           }

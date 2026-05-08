@@ -1,4 +1,13 @@
 :root {
+  /* Aliases semânticos usados pelos módulos CSS */
+  --primario: #1a4a3a;        /* = --verde-escuro */
+  --primario-hover: #2d6a54;  /* = --verde-medio */
+  --bg: #f5f0e8;              /* = --areia */
+  --surface: #ffffff;
+  --texto: #1a1a1a;           /* = --texto-principal */
+  --texto-suave: #4a4a4a;     /* = --texto-secundario */
+  --borda: rgba(0,0,0,0.12);
+
   --verde-escuro: #1a4a3a;
   --verde-medio: #2d6a54;
   --verde-suave: #4a8f72;
