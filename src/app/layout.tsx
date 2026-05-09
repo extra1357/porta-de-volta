@@ -36,6 +36,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
+      <head>
+        <link rel="preload" as="image" href="/images/hero-bg.jpg" fetchPriority="high" />
+      </head>
+      <head>
+        <link rel="preload" as="image" href="/images/hero-bg.jpg" fetchPriority="high" />
+      </head>
       <body>
         <SessionWrapper>
           <a href="#conteudo-principal" className="sr-only">

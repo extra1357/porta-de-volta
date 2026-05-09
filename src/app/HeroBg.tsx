@@ -1,6 +1,6 @@
 'use client'
-
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import styles from './HeroBg.module.css'
 
 const FOTOS = [
@@ -31,18 +31,26 @@ export default function HeroBg() {
 
   return (
     <div className={styles.heroBgWrap} aria-hidden="true">
-      <div
-        key={'atual-' + atual}
-        className={styles.heroBgSlide + ' ' + styles.heroBgAtiva}
-        style={{ backgroundImage: `url(${FOTOS[atual]})` }}
-      />
-      {proxima !== null && (
+      {FOTOS.map((foto, i) => (
         <div
-          key={'prox-' + proxima}
-          className={styles.heroBgSlide + ' ' + (fadeIn ? styles.heroBgVisivel : styles.heroBgOculta)}
-          style={{ backgroundImage: `url(${FOTOS[proxima]})` }}
-        />
-      )}
+          key={foto}
+          className={[
+            styles.heroBgSlide,
+            i === atual ? styles.heroBgAtiva : '',
+            i === proxima ? (fadeIn ? styles.heroBgVisivel : styles.heroBgOculta) : '',
+          ].join(' ')}
+        >
+          <Image
+            src={foto}
+            alt=""
+            fill
+            sizes="100vw"
+            quality={i === 0 ? 85 : 75}
+            priority={i === 0}
+            style={{ objectFit: 'cover', objectPosition: 'center' }}
+          />
+        </div>
+      ))}
     </div>
   )
 }
